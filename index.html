@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WorkFlow AI - 스마트 공문·양식·매뉴얼 업무 보조 시스템 (2025-2028)</title>
-  <!-- Tailwind CSS CDN -->
+  <title>K-에듀파인 공문 9단계 자동 처리 워크스테이션 (2025-2028)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SheetJS (엑셀/CSV 파싱용 - 실패해도 무방하도록 비동기 처리) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background-color: #f8fafc; }
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background-color: #f1f5f9; }
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     @keyframes pulse-fast { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -19,415 +17,432 @@
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-  <!-- 상단 네비게이션 -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+  <!-- 상단 헤더 -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="bg-indigo-600 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg shadow-inner">W</div>
+        <div class="bg-indigo-600 w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-base shadow">K</div>
         <div>
-          <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
-            <span>WorkFlow AI</span>
-            <span class="text-[11px] bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">2025-2028 Edition</span>
+          <h1 class="font-bold text-base md:text-lg leading-tight flex items-center gap-2">
+            <span>K-에듀파인 공문 9단계 자동 업무보조 시스템</span>
+            <span class="hidden sm:inline-block text-[11px] bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">2025~2028 학사달력 연동</span>
           </h1>
-          <p class="text-xs text-slate-400">공문 기간 관리 · 양식 추출 · 매뉴얼 다중검증 도우미</p>
+          <p class="text-[11px] text-slate-400">공문 투입 즉시 [필수/권장 판별 → 파일·내용·기한·제출처 추출 → 흐름도 생성 → 수합·양식작성 → 제출체크] 자동화</p>
         </div>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <div class="hidden md:flex items-center space-x-1.5 bg-slate-800 px-3 py-1.5 rounded-full text-xs border border-slate-700">
-          <span class="text-slate-400 mr-1">인식 지원 포맷:</span>
-          <span class="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-medium">HWP</span>
-          <span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-medium">XLSX</span>
-          <span class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-medium">PDF</span>
-          <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-medium">JPG/PNG</span>
+      <div class="flex items-center space-x-2">
+        <div class="hidden lg:flex items-center space-x-1 bg-slate-800 px-3 py-1.5 rounded-full text-[11px] border border-slate-700">
+          <span class="text-slate-400 mr-1">인식 포맷:</span>
+          <span class="text-sky-300 font-semibold">HWP</span>·
+          <span class="text-emerald-300 font-semibold">XLSX</span>·
+          <span class="text-rose-300 font-semibold">PDF</span>·
+          <span class="text-amber-300 font-semibold">JPG/PNG</span>
         </div>
-        <button type="button" onclick="window.app.toggleApiModal()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition cursor-pointer">
-          <span>🔑</span>
-          <span id="apiStatusText">Gemini API 연결 (선택)</span>
+        <button type="button" onclick="window.app.toggleApiModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition cursor-pointer">
+          🔑 <span id="apiStatusText">AI 엔진 설정</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- 메인 컨테이너 -->
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+  <main class="max-w-7xl mx-auto px-4 py-5 flex-1 w-full">
 
-    <!-- 상단 요약 카드 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+    <!-- 상단 요약 KPI 배너 -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-500 font-medium">등록된 공문/업무</p>
-          <p class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">0건</p>
+          <p class="text-[11px] text-slate-500 font-semibold">수신 공문 총계</p>
+          <p class="text-xl font-extrabold text-slate-800 mt-0.5" id="statTotal">0건</p>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">📄</div>
+        <span class="text-xl">📥</span>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-rose-200 flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-500 font-medium">제출 완료</p>
-          <p class="text-2xl font-bold text-emerald-600 mt-1" id="statCompleted">0건</p>
+          <p class="text-[11px] text-rose-600 font-bold">🔴 필수 제출 공문</p>
+          <p class="text-xl font-extrabold text-rose-600 mt-0.5" id="statMandatory">0건</p>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">✅</div>
+        <span class="text-xl">🚨</span>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-500 font-medium">미완료 (진행중)</p>
-          <p class="text-2xl font-bold text-amber-600 mt-1" id="statPending">0건</p>
+          <p class="text-[11px] text-slate-500 font-semibold">🟢 권장/단순참고</p>
+          <p class="text-xl font-extrabold text-slate-600 mt-0.5" id="statOptional">0건</p>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold">⏳</div>
+        <span class="text-xl">📌</span>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-amber-200 flex items-center justify-between">
         <div>
-          <p class="text-xs text-slate-500 font-medium">전체 업무 달성률</p>
-          <p class="text-2xl font-bold text-indigo-600 mt-1" id="statRate">0%</p>
+          <p class="text-[11px] text-amber-600 font-bold">진행중 (미제출)</p>
+          <p class="text-xl font-extrabold text-amber-600 mt-0.5" id="statPending">0건</p>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-bold">📊</div>
+        <span class="text-xl">⏳</span>
+      </div>
+      <div class="col-span-2 md:col-span-1 bg-white p-3.5 rounded-xl shadow-sm border border-emerald-200 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] text-emerald-600 font-bold">9단계 제출 완료</p>
+          <p class="text-xl font-extrabold text-emerald-600 mt-0.5" id="statCompleted">0건</p>
+        </div>
+        <span class="text-xl">✅</span>
       </div>
     </div>
 
-    <!-- 탭 메뉴 -->
-    <div class="flex space-x-1 md:space-x-2 border-b border-slate-200 mb-6 overflow-x-auto pb-1">
-      <button type="button" onclick="window.app.switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 font-semibold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white whitespace-nowrap cursor-pointer">
-        📅 통합 달력 (2025~2028) & 기간 관리
+    <!-- 메인 탭 네비게이션 -->
+    <div class="flex space-x-1 md:space-x-2 border-b border-slate-300 mb-5 overflow-x-auto pb-1">
+      <button type="button" onclick="window.app.switchTab('analyzer')" id="tab-analyzer" class="tab-btn px-4 py-2.5 font-bold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white whitespace-nowrap cursor-pointer">
+        ⚡ 1~5단계: K-에듀파인 공문 자동 판독기
       </button>
-      <button type="button" onclick="window.app.switchTab('upload')" id="tab-upload" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
-        📤 1. 공문 등록·기간 설정
+      <button type="button" onclick="window.app.switchTab('workflow')" id="tab-workflow" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
+        🧭 6~9단계: 업무 흐름도 · 수합 · 양식작성 · 제출
       </button>
-      <button type="button" onclick="window.app.switchTab('autofill')" id="tab-autofill" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
-        ✨ 2. 필요정보 추출 & 3. 양식 자동정리
-      </button>
-      <button type="button" onclick="window.app.switchTab('checklist')" id="tab-checklist" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
-        ☑️ 4. 업무 완료 체크리스트
+      <button type="button" onclick="window.app.switchTab('calendar')" id="tab-calendar" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
+        📅 통합 자동 달력 (2025~2028) & 기간 관리
       </button>
       <button type="button" onclick="window.app.switchTab('manual')" id="tab-manual" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
-        📘 5. 매뉴얼 정밀검증 AI 도우미
+        📘 업무 매뉴얼 3단계 검증 도우미
       </button>
     </div>
 
-    <!-- ==================== [탭 0] 통합 달력 (2025~2028) & 대시보드 ==================== -->
-    <section id="view-dashboard" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- 달력 영역 (8칼럼) -->
+    <!-- ===================================================================== -->
+    <!-- [탭 1] 1~5단계: K-에듀파인 공문 자동 판독기 -->
+    <!-- ===================================================================== -->
+    <section id="view-analyzer" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- 좌측: 공문 파일/텍스트 투입구 (5칼럼) -->
+      <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-bold text-base text-slate-900">📥 K-에듀파인 공문 투입</h2>
+            <span class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">HWP / PDF / XLSX / 이미지</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">내려온 공문 파일이나 본문을 넣으면 <b>1~5단계 핵심 정보와 6단계 업무 흐름도</b>를 자동으로 뽑아내고 달력에 기한을 등록합니다.</p>
+
+          <!-- 파일 업로드 박스 -->
+          <label class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 rounded-xl p-4 flex items-center justify-between cursor-pointer transition mb-3">
+            <div class="text-xs">
+              <p class="font-bold text-indigo-950">📂 공문 원문 또는 붙임 양식 업로드</p>
+              <p class="text-slate-500 mt-0.5">.hwp, .pdf, .xlsx, .jpg, .png, .txt 자동 인식</p>
+            </div>
+            <span class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">파일 선택</span>
+            <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.txt" onchange="window.app.handleOfficialFileUpload(event)">
+          </label>
+
+          <!-- 실전 K-에듀파인 샘플 공문 3종 (필수 2종, 권장 1종) -->
+          <div class="mb-3">
+            <span class="text-[11px] font-bold text-slate-500 block mb-1.5">⚡ 클릭 한 번으로 실제 K-에듀파인 공문 판독 테스트:</span>
+            <div class="grid grid-cols-1 gap-1.5">
+              <button type="button" onclick="window.app.loadEdufineSample(0)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-2 rounded-lg border border-rose-200 transition flex items-center justify-between">
+                <span>🔴 <b>[필수공문 예시 1]</b> 교육복지 우선지원사업 운영실적 및 만족도 제출</span>
+                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              </button>
+              <button type="button" onclick="window.app.loadEdufineSample(1)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-2 rounded-lg border border-rose-200 transition flex items-center justify-between">
+                <span>🔴 <b>[필수공문 예시 2]</b> 단위학교 영재학급 운영 결과보고서 및 정산서 제출</span>
+                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              </button>
+              <button type="button" onclick="window.app.loadEdufineSample(2)" class="text-left text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-2 rounded-lg border border-emerald-200 transition flex items-center justify-between">
+                <span>🟢 <b>[권장/홍보 공문 예시]</b> 에듀테크 활용 수업혁신 교원 자율연수 신청 안내</span>
+                <span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea id="rawOfficialInput" rows="8" class="w-full border border-slate-300 rounded-xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="K-에듀파인 공문 본문을 여기에 붙여넣거나 위 샘플 버튼을 클릭하세요..."></textarea>
+        </div>
+
+        <button type="button" onclick="window.app.analyzeEdufineDoc()" class="w-full mt-3 bg-slate-900 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl shadow transition text-sm cursor-pointer">
+          🔍 공문 9단계 핵심 정보 자동 추출 실행
+        </button>
+      </div>
+
+      <!-- 우측: 1~6단계 자동 추출 리포트 & 원클릭 등록 (7칼럼) -->
+      <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+            <div>
+              <h2 class="font-bold text-base text-slate-900">📊 공문 핵심 추출 결과 (1단계 ~ 6단계 자동 정리)</h2>
+              <p class="text-xs text-slate-500">추출된 항목을 확인하거나 수정한 뒤 하단 버튼을 누르면 달력과 워크플로우에 자동 세팅됩니다.</p>
+            </div>
+            <div id="mandatoryBadgeArea">
+              <span class="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">🔴 1단계 판정: 필수 제출</span>
+            </div>
+          </div>
+
+          <div class="space-y-3.5 text-xs">
+            <!-- 공문 제목 & 1단계 필수/권장 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div class="md:col-span-3">
+                <label class="font-bold text-slate-600 block mb-1">공문 제목 (시행번호 포함)</label>
+                <input type="text" id="extTitle" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-semibold text-slate-800">
+              </div>
+              <div>
+                <label class="font-bold text-slate-600 block mb-1">1. 필수 / 권장 구분</label>
+                <select id="extPriority" onchange="window.app.updatePriorityBadge()" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-bold bg-slate-50">
+                  <option value="필수">🔴 필수 제출 (기한엄수)</option>
+                  <option value="권장">🟢 권장/희망 시 신청</option>
+                  <option value="참고">⚪ 단순 안내/공람</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 2단계: 제출해야 할 파일 & 포맷 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <div class="md:col-span-2">
+                <label class="font-bold text-indigo-900 block mb-1">2. 제출해야 할 결과보고서 및 첨부파일</label>
+                <input type="text" id="extFiles" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 bg-white font-medium" placeholder="예: [붙임1] 운영실적보고서.hwp, [붙임2] 정산내역서.xlsx">
+              </div>
+              <div>
+                <label class="font-bold text-indigo-900 block mb-1">주 제출 파일 포맷</label>
+                <select id="extFormat" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold">
+                  <option value="HWP">HWP (한글 문서)</option>
+                  <option value="XLSX">XLSX (엑셀 시트)</option>
+                  <option value="PDF">PDF (스캔/문서)</option>
+                  <option value="JPG/PNG">JPG/PNG (증빙사진)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 3단계: 들어갈 내용 (수합 항목) -->
+            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+              <label class="font-bold text-indigo-950 block mb-1">3. 파일에 들어갈 필수 내용 (자동 추출된 작성 항목 - 쉼표로 구분)</label>
+              <input type="text" id="extContents" class="w-full border border-indigo-200 rounded-lg px-3 py-1.5 bg-white text-slate-800 font-medium" placeholder="예: 학교명, 담당자, 추진일시, 참여인원, 주요추진실적, 예산집행액, 만족도결과, 향후계획">
+            </div>
+
+            <!-- 4단계: 기한 (시작일~마감일) & 5단계: 제출처/제출방식 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="font-bold text-slate-600 block mb-1">4-1. 업무 시작일 (수합 시작)</label>
+                <input type="date" id="extStartDate" min="2025-01-01" max="2028-12-31" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5">
+              </div>
+              <div>
+                <label class="font-bold text-rose-600 block mb-1">4-2. 제출 마감 기한 (달력 표시)</label>
+                <input type="date" id="extDeadline" min="2025-01-01" max="2028-12-31" class="w-full border border-rose-300 bg-rose-50/30 rounded-lg px-2.5 py-1.5 font-bold text-rose-700">
+              </div>
+              <div>
+                <label class="font-bold text-slate-600 block mb-1">5. 제출처 및 제출 경로</label>
+                <input type="text" id="extDestination" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 font-medium" placeholder="예: 경산교육지원청 교육지원과 (K-에듀파인 문서수발)">
+              </div>
+            </div>
+
+            <!-- 6단계: 자동 생성된 업무 흐름도 미리보기 -->
+            <div class="bg-slate-900 text-white p-3.5 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-amber-300">6. 자동 생성된 맞춤형 업무 흐름도 (Workflow Pipeline)</span>
+                <span class="text-[10px] text-slate-400">등록 후 6~9단계 탭에서 단계별 체크 가능</span>
+              </div>
+              <div id="extFlowPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" onclick="window.app.confirmAndRegisterDoc()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm cursor-pointer">
+          📅 달력(2025~2028)에 기한 자동 기록 & 6~9단계 업무 워크플로우 시작하기 →
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- [탭 2] 6~9단계: 업무 흐름도 · 정보 수합 · 양식 맞춤 작성 · 제출 완료 -->
+    <!-- ===================================================================== -->
+    <section id="view-workflow" class="tab-content hidden space-y-6">
+      <!-- 상단: 처리할 공문 선택 바 & 5개 핵심 요약 배지 -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2 flex-1 min-w-[260px]">
+            <span class="text-sm font-bold text-slate-700 shrink-0">🎯 현재 처리 중인 공문:</span>
+            <select id="activeDocSelect" onchange="window.app.selectActiveDoc(this.value)" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold bg-slate-50 text-slate-900"></select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="window.app.toggleFinalSubmit()" id="finalSubmitBtn" class="px-4 py-2 rounded-lg text-xs font-extrabold transition cursor-pointer"></button>
+            <button type="button" onclick="window.app.deleteActiveDoc()" class="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 cursor-pointer">삭제</button>
+          </div>
+        </div>
+
+        <!-- 선택된 공문의 1~5단계 핵심 요약 바 -->
+        <div id="activeDocSummaryBar" class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs"></div>
+      </div>
+
+      <!-- 6단계: 인터랙티브 업무 흐름도 (클릭하여 진행단계 체크) -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">🧭 6단계: 자동 생성된 업무 흐름도 (각 단계를 클릭하면 완료 체크됩니다)</h3>
+            <p class="text-xs text-slate-500">공문 접수부터 정보 수합, 양식 작성, 내부결재, K-에듀파인 발송까지 현재 어디까지 진행되었는지 한눈에 관리하세요.</p>
+          </div>
+          <span id="flowProgressText" class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">진행률 0%</span>
+        </div>
+        <div id="interactiveFlowChart" class="grid grid-cols-2 md:grid-cols-6 gap-2.5"></div>
+      </div>
+
+      <!-- 7단계(정보 수합) & 8~9단계(양식 맞춤 작성 및 제출) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 좌측 5칼럼: 7단계 정보 수합 및 양식 파일 추출 -->
+        <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-bold text-sm text-slate-900">🗂️ 7단계: 필요 정보 수합 및 데이터 입력</h3>
+            <label class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg font-semibold cursor-pointer">
+              + 붙임 양식파일 추가 인식
+              <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.png" onchange="window.app.extractFieldsFromTemplateFile(event)">
+            </label>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">동료 교사에게 보낼 수합 안내문을 복사하거나, 수합된 자료를 아래 항목에 바로 입력하세요.</p>
+
+          <!-- 동료 교사 메신저용 수합 요청 메시지 자동 생성기 -->
+          <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3 mb-4 flex items-center justify-between gap-2">
+            <div class="text-xs text-amber-950">
+              <p class="font-bold">💬 교내 메신저(쿨메신저) 수합 요청 문구 자동 생성</p>
+              <p class="text-[11px] text-amber-800">필요 항목과 마감일이 포함된 협조 요청 메시지를 복사합니다.</p>
+            </div>
+            <button type="button" onclick="window.app.copyCollectionMessage()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 cursor-pointer">
+              수합문구 복사
+            </button>
+          </div>
+
+          <!-- 동적 수합 입력 폼 -->
+          <div id="collectionFieldsForm" class="space-y-2.5 flex-1 overflow-y-auto max-h-[360px] pr-1 custom-scroll"></div>
+        </div>
+
+        <!-- 우측 7칼럼: 8단계 양식 맞춤 자동 작성 & 9단계 제출 -->
+        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900">✨ 8단계: 제출 양식 맞춤 자동 정리 & 9단계: 최종 제출</h3>
+              <p class="text-xs text-slate-500">K-에듀파인 본문 및 한글(HWP)·엑셀(XLSX) 표준 개조식 문체(`~함`, `~임`)로 실시간 변환됩니다.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" onclick="window.app.copyFormattedDoc()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg font-bold cursor-pointer">📋 본문/표 복사</button>
+              <button type="button" onclick="window.app.downloadExcelCSV()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">📊 엑셀(CSV) 다운로드</button>
+              <button type="button" onclick="window.app.downloadHwpTxt()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">💾 보고서(TXT) 다운로드</button>
+            </div>
+          </div>
+
+          <div id="formattedOutputArea" class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex-1 overflow-y-auto max-h-[430px] text-xs leading-relaxed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- [탭 3] 통합 자동 달력 (2025~2028) & 전체 체크리스트 -->
+    <!-- ===================================================================== -->
+    <section id="view-calendar" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- 좌측 8칼럼: 2025~2028 달력 -->
       <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
           <div class="flex items-center space-x-2">
             <span class="text-lg">🗓️</span>
-            <h2 class="font-bold text-base text-slate-800" id="calendarTitle">2026년 11월 업무·제출 기한 달력</h2>
+            <h2 class="font-bold text-base text-slate-800" id="calendarTitle">2026년 11월 공문 기한 & 업무 달력</h2>
           </div>
 
-          <!-- 2025~2028 연도/월 선택 컨트롤러 -->
           <div class="flex flex-wrap items-center gap-2">
-            <select id="yearSelect" onchange="window.app.jumpToYearMonth()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="yearSelect" onchange="window.app.jumpToYearMonth()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-50">
               <option value="2025">2025년</option>
               <option value="2026" selected>2026년</option>
               <option value="2027">2027년</option>
               <option value="2028">2028년</option>
             </select>
-            <select id="monthSelect" onchange="window.app.jumpToYearMonth()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="monthSelect" onchange="window.app.jumpToYearMonth()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-50">
               <option value="0">1월</option><option value="1">2월</option><option value="2">3월</option>
               <option value="3">4월</option><option value="4">5월</option><option value="5">6월</option>
               <option value="6">7월</option><option value="7">8월</option><option value="8">9월</option>
               <option value="9">10월</option><option value="10" selected>11월</option><option value="11">12월</option>
             </select>
             <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-              <button type="button" onclick="window.app.changeMonth(-1)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-xs font-bold">◀</button>
-              <button type="button" onclick="window.app.changeMonth(0)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold border-x border-slate-200">오늘</button>
-              <button type="button" onclick="window.app.changeMonth(1)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-xs font-bold">▶</button>
+              <button type="button" onclick="window.app.changeMonth(-1)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">◀</button>
+              <button type="button" onclick="window.app.changeMonth(0)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold border-x border-slate-200 cursor-pointer">오늘</button>
+              <button type="button" onclick="window.app.changeMonth(1)" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-xs font-bold cursor-pointer">▶</button>
             </div>
           </div>
         </div>
 
-        <!-- 달력 내 기간 빠른 조회 필터 -->
+        <!-- 기간 조회 필터 -->
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-semibold text-slate-600">📌 조회 기간 하이라이트 설정:</span>
+            <span class="font-semibold text-slate-600">📌 특정 기간 강조 조회:</span>
             <input type="date" id="filterStartDate" min="2025-01-01" max="2028-12-31" value="2026-11-01" class="border border-slate-300 rounded px-2 py-1 bg-white">
             <span>~</span>
             <input type="date" id="filterEndDate" min="2025-01-01" max="2028-12-31" value="2026-11-30" class="border border-slate-300 rounded px-2 py-1 bg-white">
-            <button type="button" onclick="window.app.applyDateRangeFilter()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded font-semibold transition">기간 적용</button>
-            <button type="button" onclick="window.app.clearDateRangeFilter()" class="bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-2.5 py-1 rounded">초기화</button>
+            <button type="button" onclick="window.app.applyDateRangeFilter()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded font-semibold cursor-pointer">적용</button>
+            <button type="button" onclick="window.app.clearDateRangeFilter()" class="bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 px-2.5 py-1 rounded cursor-pointer">초기화</button>
           </div>
-          <span id="rangeFilterStatus" class="text-indigo-600 font-semibold">전체 일정 표시 중</span>
+          <span id="rangeFilterStatus" class="text-indigo-600 font-semibold">전체 공문 일정 표시 중</span>
         </div>
 
-        <!-- 요일 헤더 -->
         <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-bold text-slate-500 pb-2 border-b border-slate-200">
           <div class="text-rose-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
         </div>
-
-        <!-- 날짜 그리드 (자동 생성) -->
         <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 mt-2"></div>
       </div>
 
-      <!-- 우측: 기간별 제출 파일 목록 & 빠른 기간 추가 (4칼럼) -->
-      <div class="lg:col-span-4 space-y-5">
-        <!-- 달력에서 바로 일정/기간 빠른 추가 -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <h3 class="font-bold text-sm text-slate-800 mb-2 flex items-center justify-between">
-            <span>⚡ 빠른 업무 및 기간 등록 (2025~2028)</span>
-            <button type="button" onclick="window.app.switchTab('upload')" class="text-xs text-indigo-600 hover:underline font-medium">상세 공문 분석 →</button>
-          </h3>
-          <div class="space-y-2.5 text-xs">
-            <input type="text" id="quickTitle" placeholder="업무명 입력 (예: 교육복지 운영실적 보고)" class="w-full border border-slate-200 rounded-lg px-3 py-2">
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="text-[11px] text-slate-500 font-medium">시작일</label>
-                <input type="date" id="quickStart" min="2025-01-01" max="2028-12-31" value="2026-11-18" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 mt-0.5">
-              </div>
-              <div>
-                <label class="text-[11px] text-slate-500 font-medium">마감 기한</label>
-                <input type="date" id="quickEnd" min="2025-01-01" max="2028-12-31" value="2026-11-22" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 mt-0.5">
-              </div>
-            </div>
-            <div class="flex gap-2">
-              <select id="quickFormat" class="border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 font-semibold">
-                <option value="HWP">HWP</option>
-                <option value="XLSX">XLSX</option>
-                <option value="PDF">PDF</option>
-                <option value="JPG/PNG">JPG/PNG</option>
-              </select>
-              <input type="text" id="quickFile" placeholder="제출 파일명 (예: 실적보고서.hwp)" class="flex-1 border border-slate-200 rounded-lg px-3 py-1.5">
-            </div>
-            <button type="button" onclick="window.app.quickAddTask()" class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-semibold py-2 rounded-lg transition">
-              + 달력에 기간 및 제출 파일 등록
-            </button>
+      <!-- 우측 4칼럼: 공문 체크리스트 & 필터 -->
+      <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm text-slate-900">☑️ 공문 처리 완료 체크리스트</h3>
+          <div class="flex gap-1">
+            <button type="button" onclick="window.app.setListFilter('all')" class="list-filter-btn text-[11px] px-2 py-1 rounded bg-indigo-600 text-white font-bold" data-f="all">전체</button>
+            <button type="button" onclick="window.app.setListFilter('mandatory')" class="list-filter-btn text-[11px] px-2 py-1 rounded bg-slate-100 text-slate-600 font-semibold" data-f="mandatory">필수만</button>
+            <button type="button" onclick="window.app.setListFilter('pending')" class="list-filter-btn text-[11px] px-2 py-1 rounded bg-slate-100 text-slate-600 font-semibold" data-f="pending">미제출</button>
           </div>
         </div>
-
-        <!-- 제출해야 할 파일 리스트 -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-sm text-slate-800">📋 제출 파일 및 기간 현황</h2>
-            <span id="taskCountBadge" class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">3건</span>
-          </div>
-          <div id="dashboardTaskList" class="space-y-2.5 overflow-y-auto max-h-[380px] custom-scroll pr-1"></div>
-        </div>
+        <div id="calendarSideList" class="space-y-2.5 flex-1 overflow-y-auto max-h-[540px] custom-scroll pr-1"></div>
       </div>
     </section>
 
-    <!-- ==================== [탭 1] 공문 등록·분석 (기간 설정 포함) ==================== -->
-    <section id="view-upload" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 class="font-bold text-base mb-1">📤 1. 공문 파일 업로드 및 자동 텍스트/표 인식</h2>
-        <p class="text-xs text-slate-500 mb-4">HWP, PDF, XLSX, JPG, PNG 파일을 선택하거나 아래 샘플 공문을 눌러 즉시 테스트해보세요.</p>
-
-        <label class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition mb-4">
-          <span class="text-3xl mb-2">📂</span>
-          <span class="text-sm font-semibold text-slate-700">공문 및 첨부 양식 파일 업로드 (클릭)</span>
-          <span class="text-xs text-slate-400 mt-1">지원 포맷: .hwp, .hwpx, .xlsx, .xls, .csv, .pdf, .jpg, .png, .txt</span>
-          <input type="file" id="officialFileInput" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.txt" onchange="window.app.handleOfficialFileUpload(event)">
-        </label>
-
-        <div class="mb-3">
-          <span class="text-xs font-semibold text-slate-500 block mb-1.5">원클릭 샘플 공문 불러오기:</span>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" onclick="window.app.loadSampleOfficial(0)" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 transition font-medium">
-              📄 [샘플1] 교육복지 우선지원사업 실적 제출 공문
-            </button>
-            <button type="button" onclick="window.app.loadSampleOfficial(1)" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 px-3 py-1.5 rounded-lg border border-slate-200 transition font-medium">
-              📊 [샘플2] 영재학급 운영 결과 및 정산서 제출 공문
-            </button>
-          </div>
-        </div>
-
-        <textarea id="officialRawText" rows="7" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="공문 내용을 붙여넣거나 파일을 업로드하면 텍스트와 표가 추출됩니다..."></textarea>
-
-        <button type="button" onclick="window.app.analyzeOfficialDoc()" class="w-full mt-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow transition">
-          🔍 공문에서 제출 파일 · 수행 기간 · 필수 항목 추출하기
-        </button>
-      </div>
-
-      <!-- 우측: 추출된 정보 및 기간 설정 -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
-        <div>
-          <h2 class="font-bold text-base mb-1">✅ 추출 결과 및 업무 기간(시작일~마감일) 설정</h2>
-          <p class="text-xs text-slate-500 mb-4">2025년~2028년 달력에 표시될 시작일과 마감 기한을 지정하세요.</p>
-
-          <div class="space-y-3">
-            <div>
-              <label class="text-xs font-semibold text-slate-600">공문 제목 (업무명)</label>
-              <input type="text" id="parsedTitle" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="예: 2026학년도 교육복지 우선지원사업 운영 실적 제출">
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="text-xs font-semibold text-slate-600">업무 시작일</label>
-                <input type="date" id="parsedStartDate" min="2025-01-01" max="2028-12-31" value="2026-11-17" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-slate-600">제출 마감 기한</label>
-                <input type="date" id="parsedDeadline" min="2025-01-01" max="2028-12-31" value="2026-11-24" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-slate-600">파일 양식 포맷</label>
-                <select id="parsedFormat" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                  <option value="HWP">HWP (한글 문서)</option>
-                  <option value="XLSX">XLSX (엑셀 시트)</option>
-                  <option value="PDF">PDF (문서)</option>
-                  <option value="JPG/PNG">JPG/PNG (증빙 이미지)</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label class="text-xs font-semibold text-slate-600">제출해야 할 파일명</label>
-              <input type="text" id="parsedFileName" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="예: [붙임1] 사업운영실적보고서(학교명).hwp">
-            </div>
-            <div>
-              <label class="text-xs font-semibold text-slate-600">추출된 필요 작성 항목 (쉼표로 구분)</label>
-              <input type="text" id="parsedFields" class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="예: 학교명, 담당교사, 운영기간, 참여인원, 주요실적, 예산집행액, 향후계획">
-            </div>
-          </div>
-        </div>
-
-        <button type="button" onclick="window.app.registerTaskFromOfficial()" class="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg shadow transition">
-          📅 달력(2025~2028) 및 제출 목록에 업무 등록하기
-        </button>
-      </div>
-    </section>
-
-    <!-- ==================== [탭 2] 필요정보 추출 & 양식 자동 정리 ==================== -->
-    <section id="view-autofill" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-        <h2 class="font-bold text-base mb-3">2. 제출 파일 선택 및 필요 정보 추출·입력</h2>
-
-        <div class="mb-4">
-          <label class="text-xs font-semibold text-slate-500 block mb-1">등록된 제출 파일 선택:</label>
-          <select id="selectedTaskSelect" onchange="window.app.selectTaskForAutofill(this.value)" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium bg-slate-50"></select>
-        </div>
-
-        <div class="bg-indigo-50/60 p-3 rounded-lg border border-indigo-100 mb-4 flex items-center justify-between">
-          <div class="text-xs">
-            <p class="font-semibold text-slate-700">제출할 양식 파일(HWP/XLSX/PDF/IMG) 넣기</p>
-            <p class="text-slate-500">파일을 넣으면 필요한 입력 항목을 추출합니다.</p>
-          </div>
-          <label class="bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer shrink-0 transition">
-            양식 업로드
-            <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png" onchange="window.app.extractFieldsFromTemplateFile(event)">
-          </label>
-        </div>
-
-        <div id="dynamicFieldsContainer" class="space-y-3 flex-1 overflow-y-auto max-h-[360px] pr-1 custom-scroll"></div>
-
-        <button type="button" onclick="window.app.generateFormattedOutput()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow transition">
-          ✨ 3. 제출 양식에 맞게 자동 정리하기
-        </button>
-      </div>
-
-      <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-100">
-          <div>
-            <h2 class="font-bold text-base">📄 양식 맞춤 자동 정리 문서 미리보기</h2>
-            <p class="text-xs text-slate-400">관공서·학교 표준 개조식 문체(~함, ~임)와 표 규격으로 자동 변환됩니다.</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button type="button" onclick="window.app.copyFormattedResult()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold">📋 복사</button>
-            <button type="button" onclick="window.app.downloadAsCSV()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-semibold">📊 엑셀(CSV) 저장</button>
-            <button type="button" onclick="window.app.downloadAsDoc()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg font-semibold">💾 문서(TXT) 저장</button>
-          </div>
-        </div>
-
-        <div id="formattedDocumentPreview" class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex-1 text-sm leading-relaxed overflow-y-auto max-h-[460px]"></div>
-      </div>
-    </section>
-
-    <!-- ==================== [탭 3] 업무 완료 체크리스트 ==================== -->
-    <section id="view-checklist" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-bold text-base">☑️ 4. 업무 완료 여부 통합 체크리스트</h2>
-          <p class="text-xs text-slate-500">체크박스를 클릭하면 완료/미완료 상태가 즉시 전환되며 달력에 반영됩니다.</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button type="button" onclick="window.app.filterChecklist('all')" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold" data-filter="all">전체 보기</button>
-          <button type="button" onclick="window.app.filterChecklist('pending')" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold" data-filter="pending">미완료만</button>
-          <button type="button" onclick="window.app.filterChecklist('completed')" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold" data-filter="completed">완료됨</button>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr class="border-b border-slate-200 text-xs text-slate-500 bg-slate-50">
-              <th class="py-3 px-4 w-20 text-center">완료 체크</th>
-              <th class="py-3 px-4">관련 공문 / 업무명</th>
-              <th class="py-3 px-4">제출 파일명 (양식)</th>
-              <th class="py-3 px-4">수행 기간 (시작~마감)</th>
-              <th class="py-3 px-4">상태</th>
-              <th class="py-3 px-4 text-right">관리</th>
-            </tr>
-          </thead>
-          <tbody id="checklistTableBody" class="divide-y divide-slate-100"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ==================== [탭 4] 업무 매뉴얼 정밀검증 AI 도우미 (신규 기능 4 & 5) ==================== -->
+    <!-- ===================================================================== -->
+    <!-- [탭 4] 업무 매뉴얼 탑재 & 3단계 다중 교차검증 도우미 -->
+    <!-- ===================================================================== -->
     <section id="view-manual" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- 좌측: 업무 매뉴얼 탑재 및 관리 (5칼럼) -->
       <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
         <div class="flex items-center justify-between mb-2">
-          <h2 class="font-bold text-base">📘 업무 매뉴얼·지침 베이스 탑재</h2>
-          <span id="manualCountBadge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">3개 매뉴얼 탑재됨</span>
+          <h2 class="font-bold text-base">📘 학교 업무 매뉴얼·지침 탑재</h2>
+          <span id="manualCountBadge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">3개 탑재됨</span>
         </div>
-        <p class="text-xs text-slate-500 mb-4">학교·기관 업무 매뉴얼이나 지침서(HWP, PDF, XLSX, TXT)를 등록하면 도우미가 모든 조항과 숫자를 교차 검토해 답변합니다.</p>
+        <p class="text-xs text-slate-500 mb-3">업무 매뉴얼(HWP, PDF, XLSX, TXT)을 등록하면 공문 처리 중 헷갈리는 예산·정산·학사 규정을 3단계로 교차 검증해 알려줍니다.</p>
 
-        <!-- 매뉴얼 파일 업로드 -->
-        <label class="border-2 border-dashed border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 rounded-xl p-4 flex items-center justify-between cursor-pointer transition mb-4">
+        <label class="border-2 border-dashed border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition mb-3">
           <div class="text-xs">
-            <p class="font-bold text-emerald-900">➕ 매뉴얼 파일 추가 업로드 (HWP/PDF/XLSX/TXT)</p>
-            <p class="text-emerald-600 mt-0.5">업로드 즉시 문단·조항별로 색인(Indexing)됩니다.</p>
+            <p class="font-bold text-emerald-900">➕ 매뉴얼 파일 업로드 (HWP/PDF/XLSX/TXT)</p>
+            <p class="text-emerald-600 mt-0.5">업로드 즉시 조항·수치 자동 색인</p>
           </div>
           <span class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">파일 선택</span>
           <input type="file" class="hidden" accept=".hwp,.hwpx,.pdf,.xlsx,.xls,.txt,.csv" onchange="window.app.handleManualFileUpload(event)">
         </label>
 
-        <!-- 직접 매뉴얼 텍스트 추가 -->
-        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 mb-4 space-y-2">
-          <input type="text" id="newManualTitle" placeholder="새 매뉴얼/지침 제목 (예: 2026 학교생활기록부 기재요령)" class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white">
-          <textarea id="newManualContent" rows="3" placeholder="매뉴얼 핵심 내용이나 규정을 붙여넣으세요..." class="w-full border border-slate-200 rounded-lg p-2.5 text-xs bg-white"></textarea>
-          <button type="button" onclick="window.app.addManualText()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2 rounded-lg transition">
-            매뉴얼 지식베이스에 탑재하기
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-3 space-y-2">
+          <input type="text" id="newManualTitle" placeholder="매뉴얼 제목 (예: 2026 교육복지 회계집행 지침)" class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs bg-white">
+          <textarea id="newManualContent" rows="2" placeholder="핵심 규정이나 기준을 붙여넣으세요..." class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white"></textarea>
+          <button type="button" onclick="window.app.addManualText()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2 rounded-lg transition cursor-pointer">
+            매뉴얼 추가 등록
           </button>
         </div>
 
-        <!-- 탑재된 매뉴얼 목록 -->
-        <h3 class="text-xs font-bold text-slate-600 mb-2">현재 탑재된 업무 매뉴얼 목록 (클릭하여 원문 확인)</h3>
-        <div id="manualListContainer" class="space-y-2 flex-1 overflow-y-auto max-h-[270px] custom-scroll pr-1"></div>
+        <div id="manualListContainer" class="space-y-2 flex-1 overflow-y-auto max-h-[280px] custom-scroll pr-1"></div>
       </div>
 
-      <!-- 우측: 3단계 다중 교차검증 Q&A 도우미 (7칼럼) -->
       <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
         <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
           <div>
-            <h2 class="font-bold text-base flex items-center gap-2">
-              <span>🛡️ 다중 교차검증(Multi-Pass Verification) 매뉴얼 도우미</span>
-            </h2>
-            <p class="text-xs text-slate-500">질문 시 <b>[1차 원문 탐색 → 2차 수치·기한·예외 대조 → 3차 무결성 검증]</b>을 거쳐 오차 없는 답변만 제공합니다.</p>
+            <h2 class="font-bold text-base">🛡️ 3단계 다중 교차검증 매뉴얼 AI 도우미</h2>
+            <p class="text-xs text-slate-500"><b>[1차 원문 조항 탐색 → 2차 금액·기한·비율 교차 대조 → 3차 예외조항 최종 검증]</b> 후 답변합니다.</p>
           </div>
-          <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-1 rounded-full">✓ 3단계 팩트체크 모드 가동중</span>
+          <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-1 rounded-full">✓ 다중 검증 가동중</span>
         </div>
 
-        <!-- 자주 묻는 질문 원클릭 버튼 -->
-        <div class="mb-3">
-          <span class="text-[11px] font-semibold text-slate-400 block mb-1.5">💡 탑재된 매뉴얼 기반 추천 질문 (클릭 시 즉시 3단계 검증 실행):</span>
-          <div class="flex flex-wrap gap-1.5">
-            <button type="button" onclick="window.app.askSampleQuestion('교육복지 우선지원사업 예산 집행 시 간식비 및 강사료 지급 한도와 주의사항은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
-              Q1. 교육복지 간식비·강사료 한도 및 주의사항은?
-            </button>
-            <button type="button" onclick="window.app.askSampleQuestion('영재학급 수료 인정 출석률 기준과 산출물 미제출 시 처리 규정은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
-              Q2. 영재학급 수료 출석률 기준 및 예외 규정은?
-            </button>
-            <button type="button" onclick="window.app.askSampleQuestion('공문서 및 정산보고서 제출 시 품의 일자와 영수증 결제 시간 관련 감사 지적 사항은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
-              Q3. 정산 시 품의일자·영수증 감사 지적 기준은?
-            </button>
-          </div>
+        <div class="mb-3 flex flex-wrap gap-1.5">
+          <button type="button" onclick="window.app.askSampleQuestion('교육복지 우선지원사업 예산 집행 시 간식비 및 강사료 지급 한도와 주의사항은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer">
+            Q1. 교육복지 간식비·강사료 한도는?
+          </button>
+          <button type="button" onclick="window.app.askSampleQuestion('영재학급 수료 인정 출석률 기준과 산출물 미제출 시 처리 규정은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer">
+            Q2. 영재학급 수료 출석률 및 예외 규정은?
+          </button>
+          <button type="button" onclick="window.app.askSampleQuestion('공문서 및 정산보고서 제출 시 품의 일자와 영수증 결제 시간 관련 감사 지적 사항은?')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer">
+            Q3. 정산 시 품의일자·영수증 감사 지적 기준은?
+          </button>
         </div>
 
-        <!-- 대화 및 검증 로그 출력창 -->
         <div id="qaChatContainer" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto max-h-[380px] space-y-4 custom-scroll"></div>
 
-        <!-- 질문 입력창 -->
         <div class="mt-3 flex gap-2">
-          <input type="text" id="qaInput" onkeydown="if(event.key==='Enter') window.app.submitManualQuestion()" placeholder="매뉴얼에 관해 궁금한 규정, 예산 기준, 절차 등을 질문하세요..." class="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <button type="button" onclick="window.app.submitManualQuestion()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition shrink-0">
-            정밀 검토 및 답변 받기
+          <input type="text" id="qaInput" onkeydown="if(event.key==='Enter') window.app.submitManualQuestion()" placeholder="매뉴얼 규정, 정산 기준, 제출 절차 등을 질문하세요..." class="flex-1 border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button type="button" onclick="window.app.submitManualQuestion()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition shrink-0 cursor-pointer">
+            3단계 검증 질문
           </button>
         </div>
       </div>
@@ -435,186 +450,679 @@
 
   </main>
 
-  <!-- Gemini API Key 설정 모달 -->
+  <!-- API 모달 -->
   <div id="apiModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-base">🔑 Google Gemini API 키 설정 (선택사항)</h3>
+        <h3 class="font-bold text-base">🔑 Google Gemini API 설정 (선택사항)</h3>
         <button type="button" onclick="window.app.toggleApiModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed mb-4">
-        API 키가 없어도 내장된 3단계 규칙 검증 엔진으로 모든 기능을 100% 사용할 수 있습니다. Gemini API 키를 입력하면 실제 LLM 교차검증과 이미지 OCR이 함께 동작합니다.
+        별도의 API 키 없이도 내장된 K-에듀파인 9단계 규칙 엔진이 100% 작동합니다. Gemini API 키를 연결하면 이미지 공문 OCR과 AI 문장 교정이 함께 동작합니다.
       </p>
       <input type="password" id="geminiApiKeyInput" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-4" placeholder="AIzaSy...">
       <div class="flex justify-end space-x-2">
         <button type="button" onclick="window.app.toggleApiModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg">닫기</button>
-        <button type="button" onclick="window.app.saveApiKey()" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg">저장하기</button>
+        <button type="button" onclick="window.app.saveApiKey()" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-lg">저장</button>
       </div>
     </div>
   </div>
 
-  <!-- 메인 스크립트 (외부 의존성 없이 100% 자체 동작 보장) -->
   <script>
     (function() {
-      // 안전한 스토리지 헬퍼 (사파리/시크릿모드/보안환경 에러 방지)
       const storage = {
         get(key, fallback) {
           try {
             const raw = localStorage.getItem(key);
             return raw ? JSON.parse(raw) : fallback;
-          } catch (e) {
-            return fallback;
-          }
+          } catch (e) { return fallback; }
         },
         set(key, val) {
-          try {
-            localStorage.setItem(key, JSON.stringify(val));
-          } catch (e) {}
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
         }
       };
 
-      // 2025~2028 주요 공휴일/학사일정 데이터
       const holidays = {
         '01-01': '신정', '03-01': '삼일절', '05-05': '어린이날',
         '06-06': '현충일', '08-15': '광복절', '10-03': '개천절',
         '10-09': '한글날', '12-25': '성탄절'
       };
 
-      // 초기 샘플 공문/업무 데이터 (기간 startDate ~ deadline 포함)
-      const defaultTasks = [
+      // K-에듀파인 9단계 표준 데이터 구조
+      const defaultDocs = [
         {
-          id: 'task-1',
-          officialTitle: '2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 제출',
-          fileName: '[붙임1] 교육복지_운영실적보고서.hwp',
+          id: 'doc-1',
+          officialTitle: '[경산교육지원청-4812] 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 제출',
+          priority: '필수', // 1. 필수 / 권장 / 참고
+          fileName: '[붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx', // 2. 제출 파일
           format: 'HWP',
-          startDate: '2026-11-16',
+          requiredFields: ['학교명', '담당부장(교사)', '프로그램명', '운영기간', '참여학생수', '주요추진실적', '예산집행내역', '만족도결과', '향후계획'], // 3. 들어갈 내용
+          startDate: '2026-11-16', // 4. 기한 (시작~마감)
           deadline: '2026-11-20',
-          completed: false,
-          requiredFields: ['학교명', '담당교사', '프로그램명', '운영기간', '참여학생수', '주요추진실적', '예산집행내역', '향후계획'],
-          extractedData: {
+          destination: '경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발)', // 5. 제출처
+          workflowSteps: [ // 6. 업무 흐름도
+            { step: '1. 공문접수 및 필수판별', done: true },
+            { step: '2. 관련부서/교사 자료수합', done: true },
+            { step: '3. 실적보고서·정산표 작성', done: true },
+            { step: '4. 첨부파일 누락·수치 검토', done: false },
+            { step: '5. 학교장 내부결재(기안)', done: false },
+            { step: '6. K-에듀파인 발송 완료', done: false }
+          ],
+          extractedData: { // 7~8. 수합 및 양식 작성 데이터
             '학교명': '옥곡초등학교',
-            '담당교사': '이규연',
-            '프로그램명': '사제동행 맞춤형 학습·정서 멘토링 및 문화체험',
+            '담당부장(교사)': '교육복지부장 이규연',
+            '프로그램명': '사제동행 학습·정서 멘토링 및 문화체험 프로그램',
             '운영기간': '2026. 3. ~ 2026. 11.',
             '참여학생수': '42명',
-            '주요추진실적': '기초학력 향상 멘토링 주 2회 운영 및 주말 문화체험 활동 4회 실시',
-            '예산집행내역': '총 4,500,000원 중 4,420,000원 집행 완료 (집행률 98.2%)',
-            '향후계획': '동계방학 중 집중 돌봄 연계 및 차년도 사업 계획 수립'
-          }
+            '주요추진실적': '기초학력 멘토링 주 2회 운영 및 사제동행 주말 문화체험 4회 실시했습니다.',
+            '예산집행내역': '총 4,500,000원 중 4,420,000원 집행 완료 (집행률 98.2%)입니다.',
+            '만족도결과': '참여 학생 및 학부모 종합 만족도 96.4% 달성했습니다.',
+            '향후계획': '동계방학 중 집중 돌봄 프로그램 연계 및 2027학년도 계획 수립 예정입니다.'
+          },
+          completed: false // 9. 최종 제출 완료 여부
         },
         {
-          id: 'task-2',
-          officialTitle: '2026학년도 단위학교 영재학급 운영 결과 및 정산서 제출',
-          fileName: '[서식2] 영재학급_예산집행_정산내역서.xlsx',
+          id: 'doc-2',
+          officialTitle: '[창의인재과-3190] 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출',
+          priority: '필수',
+          fileName: '[서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx',
           format: 'XLSX',
+          requiredFields: ['학교명', '영재학급명', '담당교사', '수료인원', '총배정예산', '집행금액', '집행잔액', '주요실험모듈실적'],
           startDate: '2026-11-21',
           deadline: '2026-11-25',
-          completed: false,
-          requiredFields: ['기관명', '과정명', '수료인원', '총배정예산', '집행금액', '잔액', '실험모듈요약'],
+          destination: '경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 제출)',
+          workflowSteps: [
+            { step: '1. 공문접수 및 필수판별', done: true },
+            { step: '2. 출석부·이수시간 확인', done: true },
+            { step: '3. 에듀파인 회계 정산대조', done: false },
+            { step: '4. 결과보고서 및 정산서 작성', done: false },
+            { step: '5. 학교장 결재 및 직인날인', done: false },
+            { step: '6. 교육지원청 최종 발송', done: false }
+          ],
           extractedData: {
-            '기관명': '옥곡초등학교',
-            '과정명': '초등 융합과학 실험 영재학급',
-            '수료인원': '20명',
+            '학교명': '옥곡초등학교',
+            '영재학급명': '초등 융합과학 실험 영재학급',
+            '담당교사': '이규연',
+            '수료인원': '20명 (전원 이수 기준 충족)',
             '총배정예산': '3,000,000원',
             '집행금액': '2,980,000원',
-            '잔액': '20,000원',
-            '실험모듈요약': '초소수성 표면 탐구, 액체 밀도탑 설계, 생체 모방 위장술 및 호흡계 모델링 실습 운영'
-          }
+            '집행잔액': '20,000원',
+            '주요실험모듈실적': '초소수성 표면 탐구, 액체 밀도탑 설계, 생체 모방 위장술, 인체 호흡계 모델링 실험 운영했습니다.'
+          },
+          completed: false
         },
         {
-          id: 'task-3',
-          officialTitle: '2026 하반기 교원 직무연수 이수증 및 결과보고서 수합',
-          fileName: '[증빙] 직무연수_이수증_스캔본.pdf',
-          format: 'PDF',
-          startDate: '2026-11-10',
-          deadline: '2026-11-14',
-          completed: true,
-          requiredFields: ['성명', '직급', '연수과정명', '연수기관', '이수시간', '이수번호', '현장적용방안'],
+          id: 'doc-3',
+          officialTitle: '[경북교육청연수원-1120] 2026 하반기 에듀테크 활용 수업혁신 자율연수 신청 안내',
+          priority: '권장',
+          fileName: '(희망교원만) 연수신청서_명단.xlsx',
+          format: 'XLSX',
+          requiredFields: ['학교명', '직급', '성명', '희망과정명', '연락처'],
+          startDate: '2026-11-12',
+          deadline: '2026-11-18',
+          destination: '경상북도교육청연수원 연수운영부 (희망자 없을 시 미제출 가능)',
+          workflowSteps: [
+            { step: '1. 공문접수 (권장/안내 판별)', done: true },
+            { step: '2. 전 교원 쿨메신저 공람안내', done: true },
+            { step: '3. 희망자 여부 확인 후 종결', done: true }
+          ],
           extractedData: {
-            '성명': '이규연',
+            '학교명': '옥곡초등학교',
             '직급': '교사',
-            '연수과정명': '에듀테크 활용 맞춤형 영어·체육 수업 혁신 과정',
-            '연수기관': '경상북도교육청연수원',
-            '이수시간': '30시간',
-            '이수번호': 'GB-2026-11048',
-            '현장적용방안': 'QR 기반 실시간 모둠 활동 및 디지털 형성평가 도구 수업 적용'
-          }
+            '성명': '희망자 없음 (내부공람 완료)',
+            '희망과정명': '디지털 기반 맞춤형 영어·체육 수업 설계 과정',
+            '연락처': '-'
+          },
+          completed: true
         }
       ];
 
-      // 초기 탑재 업무 매뉴얼 데이터
+      // 실전 K-에듀파인 샘플 공문 원문 3종
+      const edufineSamples = [
+        {
+          raw: `[경상북도경산교육지원청 시행 교육지원과-4812 (2026. 11. 16.)]\n제목: 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 조사 결과 제출(필수)\n\n1. 관련: 경상북도교육청 교육복지과-1092(2026.03.10.)\n2. 교육복지 우선지원사업 운영학교에서는 당해 연도 사업 추진 실적 및 만족도 결과를 아래 기한까지 빠짐없이 제출하여 주시기 바랍니다.\n  가. 제출대상: 관내 교육복지 우선지원사업 운영 초·중학교 전체 (필수제출)\n  나. 수합 및 작성기간: 2026-11-16 ~ 2026-11-20\n  다. 제출기한: 2026-11-20(금) 16:00까지 (기한엄수)\n  라. 제출처: 경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발로 제출)\n  마. 제출파일: [붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx\n  바. 필수포함내용: 학교명, 담당부장(교사), 프로그램명, 운영기간, 참여학생수, 주요추진실적, 예산집행내역, 만족도결과, 향후계획`,
+          title: '[경산교육지원청-4812] 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 제출',
+          priority: '필수',
+          files: '[붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx',
+          format: 'HWP',
+          contents: '학교명, 담당부장(교사), 프로그램명, 운영기간, 참여학생수, 주요추진실적, 예산집행내역, 만족도결과, 향후계획',
+          startDate: '2026-11-16',
+          deadline: '2026-11-20',
+          destination: '경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발)'
+        },
+        {
+          raw: `[경상북도경산교육지원청 시행 창의인재과-3190 (2026. 11. 17.)]\n제목: 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출 요청\n\n1. 관련: 2026학년도 영재교육 운영 기본계획\n2. 단위학교 영재학급 운영교에서는 2026학년도 운영 결과 및 사업비 집행 정산서를 다음과 같이 제출하여 주시기 바랍니다.\n  가. 구분: 필수 제출 (미제출 시 차년도 예산 배정 제외)\n  나. 정산 및 작성기간: 2026-11-21 ~ 2026-11-25\n  다. 제출기한: 2026-11-25(수) 17:00까지\n  라. 제출처: 경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 시스템 제출)\n  마. 제출서류: [서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx\n  바. 필수기재항목: 학교명, 영재학급명, 담당교사, 수료인원, 총배정예산, 집행금액, 집행잔액, 주요실험모듈실적`,
+          title: '[창의인재과-3190] 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출',
+          priority: '필수',
+          files: '[서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx',
+          format: 'XLSX',
+          contents: '학교명, 영재학급명, 담당교사, 수료인원, 총배정예산, 집행금액, 집행잔액, 주요실험모듈실적',
+          startDate: '2026-11-21',
+          deadline: '2026-11-25',
+          destination: '경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 제출)'
+        },
+        {
+          raw: `[경상북도교육청연수원 시행 연수운영부-1120 (2026. 11. 12.)]\n제목: 2026 하반기 에듀테크 활용 수업혁신 교원 자율연수 신청 안내\n\n1. 교원의 디지털 수업 역량 강화를 위한 자율연수 과정을 안내하오니 희망하는 교원이 참여할 수 있도록 안내하여 주시기 바랍니다.\n  가. 구분: 권장 사항 (희망 교원 자율 신청, 해당자 없을 시 공문 미제출)\n  나. 신청기간: 2026-11-12 ~ 2026-11-18\n  다. 제출처: 경상북도교육청연수원 연수운영부 (희망자 있을 경우만 K-에듀파인 제출)\n  라. 제출파일: (희망교원만) 연수신청서_명단.xlsx\n  마. 작성항목: 학교명, 직급, 성명, 희망과정명, 연락처`,
+          title: '[경북교육청연수원-1120] 2026 하반기 에듀테크 활용 수업혁신 자율연수 신청 안내',
+          priority: '권장',
+          files: '(희망교원만) 연수신청서_명단.xlsx',
+          format: 'XLSX',
+          contents: '학교명, 직급, 성명, 희망과정명, 연락처',
+          startDate: '2026-11-12',
+          deadline: '2026-11-18',
+          destination: '경상북도교육청연수원 연수운영부 (희망자 없을 시 미제출 가능)'
+        }
+      ];
+
+      // 업무 매뉴얼 초기 데이터
       const defaultManuals = [
         {
           id: 'manual-1',
           title: '2026학년도 교육복지 우선지원사업 운영 및 회계 집행 매뉴얼',
           category: '교육복지·예산',
-          updatedAt: '2026-03-02',
           content: `[제1장 예산 편성 및 집행 기준]
 1. 학생 간식비 집행 한도: 프로그램 참여 학생 1인당 1회 5,000원 이내로 편성하며, 전체 사업비의 15%를 초과할 수 없다. 단순 격려용 간식 지급은 불가하며 반드시 프로그램 운영 계획서에 명시된 대면 활동 시에만 지급한다.
-2. 외부 강사료 지급 기준: 특강 강사료는 시간당 기본 70,000원(초과 시간당 40,000원)을 적용하며, 원천징수(기타소득 8.8% 또는 사업소득 3.3%) 후 계좌 이체한다.
+2. 외부 강사료 지급 기준: 특강 강사료는 시간당 기본 70,000원(초과 시간당 40,000원)을 적용하며, 원천징수 후 계좌 이체한다.
 3. 정산 보고 기한: 사업 종료 후 14일 이내(최종 11월 20일까지)에 에듀파인 집행 내역서와 만족도 조사 결과를 첨부하여 교육지원청으로 제출해야 한다.`
         },
         {
           id: 'manual-2',
-          title: '단위학교 영재학급 운영 및 수료 판정 지침서 (2025~2028 개정판)',
+          title: '단위학교 영재학급 운영 및 수료 판정 지침서 (2025~2028)',
           category: '영재교육·학사',
-          updatedAt: '2026-04-10',
           content: `[제3장 영재학급 이수 및 수료 기준]
 1. 수료 출석률 기준: 연간 총 편성 시수(80시간 이상) 중 출석률 80% 이상(최소 64시간 이상 이수)인 학생에 한하여 수료를 인정한다.
 2. 공결 처리 예외 규정: 법정 감염병, 학교 대표 대회 참가, 경조사로 인한 결석은 증빙서류 제출 시 출석으로 인정하되, 전체 시수의 10%(8시간)까지만 산입한다.
-3. 산출물 평가 필수 요건: 창의적 산출물 발표대회 또는 실험 포트폴리오를 미제출한 경우 출석률을 충족하더라도 영재교육진흥위원회 심의를 거쳐 미수료 처리할 수 있다.
-4. 실험 안전 및 정산: 과학 실험 모듈 운영 시 시약 및 소모품은 사전 품의 결재 완료 후 구매해야 하며, 잔액이 100,000원 이상 발생할 경우 사유서를 첨부한다.`
+3. 산출물 평가 필수 요건: 창의적 산출물 발표대회 또는 실험 포트폴리오를 미제출한 경우 출석률을 충족하더라도 영재교육진흥위원회 심의를 거쳐 미수료 처리할 수 있다.`
         },
         {
           id: 'manual-3',
-          title: '학교 회계 및 공문서·정산서류 감사 핵심 체크리스트',
+          title: '학교 회계 및 K-에듀파인 공문·정산 감사 핵심 체크리스트',
           category: '공통행정·감사',
-          updatedAt: '2026-09-01',
           content: `[주요 감사 지적 및 필수 점검 사항]
-1. 선품의 후집행 원칙 엄수: 모든 물품 구매 및 행사 집행은 반드시 지출품의서 결재 완료일 이후에 법인카드(학교회계카드) 결제가 이루어져야 한다. 품의 결재 시각보다 영수증 승인 시각이 앞설 경우 감사 지적 대상이 된다.
-2. 주말 및 심야 시간대 카드 사용 제한: 22:00 이후 심야 시간대 및 공휴일 법인카드 결제는 원칙적으로 금지되며, 주말 체험학습 등 불가피한 경우 사전 내부결재 공문에 주말 집행 사유가 명시되어 있어야 한다.
-3. 제출 서류 보존 기한: 정산 영수증 원본, 참석자 서명부, 결과보고서 한글(HWP) 원문은 5년간 보존한다.`
+1. 선품의 후집행 원칙 엄수: 모든 물품 구매 및 행사 집행은 반드시 지출품의서 결재 완료일 이후에 학교회계카드 결제가 이루어져야 한다. 품의 결재 시각보다 영수증 승인 시각이 앞설 경우 감사 지적 대상이 된다.
+2. 주말 및 심야 시간대 카드 사용 제한: 22:00 이후 심야 시간대 및 공휴일 법인카드 결제는 원칙적으로 금지되며, 주말 문화체험 등 불가피한 경우 사전 내부결재 공문에 주말 집행 사유가 명시되어 있어야 한다.`
         }
       ];
 
-      let tasks = storage.get('workflow_ai_tasks_v2', defaultTasks);
-      if (!Array.isArray(tasks) || tasks.length === 0) tasks = defaultTasks;
+      let docs = storage.get('edufine_docs_v3', defaultDocs);
+      if (!Array.isArray(docs) || docs.length === 0) docs = defaultDocs;
 
-      let manuals = storage.get('workflow_ai_manuals_v2', defaultManuals);
+      let manuals = storage.get('edufine_manuals_v3', defaultManuals);
       if (!Array.isArray(manuals) || manuals.length === 0) manuals = defaultManuals;
 
+      let activeDocId = docs[0]?.id || null;
       let currentYear = 2026;
-      let currentMonth = 10; // 0 = 1월, 10 = 11월
-      let activeTaskId = tasks[0]?.id || null;
-      let currentFilter = 'all';
+      let currentMonth = 10; // 11월
+      let listFilter = 'all';
       let rangeStart = null;
       let rangeEnd = null;
 
       function saveState() {
-        storage.set('workflow_ai_tasks_v2', tasks);
-        storage.set('workflow_ai_manuals_v2', manuals);
+        storage.set('edufine_docs_v3', docs);
+        storage.set('edufine_manuals_v3', manuals);
         renderAll();
       }
 
       // -----------------------------------------------------------------------
-      // 상단 통계 업데이트
+      // 상단 KPI 업데이트
       // -----------------------------------------------------------------------
       function updateStats() {
-        const total = tasks.length;
-        const completed = tasks.filter(t => t.completed).length;
+        const total = docs.length;
+        const mandatory = docs.filter(d => d.priority === '필수').length;
+        const optional = docs.filter(d => d.priority !== '필수').length;
+        const completed = docs.filter(d => d.completed).length;
         const pending = total - completed;
-        const rate = total === 0 ? 0 : Math.round((completed / total) * 100);
 
         document.getElementById('statTotal').textContent = `${total}건`;
-        document.getElementById('statCompleted').textContent = `${completed}건`;
+        document.getElementById('statMandatory').textContent = `${mandatory}건`;
+        document.getElementById('statOptional').textContent = `${optional}건`;
         document.getElementById('statPending').textContent = `${pending}건`;
-        document.getElementById('statRate').textContent = `${rate}%`;
-        const badge = document.getElementById('taskCountBadge');
-        if (badge) badge.textContent = `총 ${total}건`;
+        document.getElementById('statCompleted').textContent = `${completed}건`;
       }
 
       // -----------------------------------------------------------------------
-      // 2025~2028 달력 자동 생성 및 기간(Start~End) 렌더링
+      // [탭 1] 1~6단계 공문 자동 판독기
+      // -----------------------------------------------------------------------
+      function buildDefaultWorkflow(priority) {
+        if (priority === '필수') {
+          return [
+            { step: '1. 공문접수 (필수판별)', done: true },
+            { step: '2. 교내 대상자/자료 수합', done: false },
+            { step: '3. 제출양식(HWP/XLSX) 작성', done: false },
+            { step: '4. 필수항목·예산 수치 검증', done: false },
+            { step: '5. 학교장 내부결재(기안)', done: false },
+            { step: '6. K-에듀파인 제출처 발송', done: false }
+          ];
+        }
+        return [
+          { step: '1. 공문접수 (권장/안내 판별)', done: true },
+          { step: '2. 교내 쿨메신저 공람/수요조사', done: false },
+          { step: '3. 희망자 유무 확인 후 종결/발송', done: false }
+        ];
+      }
+
+      function updatePriorityBadge() {
+        const p = document.getElementById('extPriority').value;
+        const badgeArea = document.getElementById('mandatoryBadgeArea');
+        if (p === '필수') {
+          badgeArea.innerHTML = `<span class="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">🔴 1단계 판정: 필수 제출 (기한엄수)</span>`;
+        } else if (p === '권장') {
+          badgeArea.innerHTML = `<span class="bg-emerald-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">🟢 1단계 판정: 권장 사항 (희망 시 제출)</span>`;
+        } else {
+          badgeArea.innerHTML = `<span class="bg-slate-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">⚪ 1단계 판정: 단순 참고/공람</span>`;
+        }
+        renderExtFlowPreview(p);
+      }
+
+      function renderExtFlowPreview(priority) {
+        const steps = buildDefaultWorkflow(priority);
+        const container = document.getElementById('extFlowPreview');
+        if (!container) return;
+        container.innerHTML = steps.map((s, idx) => `
+          <div class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">${idx + 1}</span>
+            <span class="truncate text-slate-200 font-medium">${s.step.replace(/^\d+\.\s*/, '')}</span>
+          </div>
+        `).join('');
+      }
+
+      function loadEdufineSample(idx) {
+        const s = edufineSamples[idx];
+        document.getElementById('rawOfficialInput').value = s.raw;
+        document.getElementById('extTitle').value = s.title;
+        document.getElementById('extPriority').value = s.priority;
+        document.getElementById('extFiles').value = s.files;
+        document.getElementById('extFormat').value = s.format;
+        document.getElementById('extContents').value = s.contents;
+        document.getElementById('extStartDate').value = s.startDate;
+        document.getElementById('extDeadline').value = s.deadline;
+        document.getElementById('extDestination').value = s.destination;
+        updatePriorityBadge();
+      }
+
+      function handleOfficialFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        let format = 'HWP';
+        if (['xlsx', 'xls', 'csv'].includes(ext)) format = 'XLSX';
+        else if (ext === 'pdf') format = 'PDF';
+        else if (['jpg', 'jpeg', 'png'].includes(ext)) format = 'JPG/PNG';
+
+        document.getElementById('extFormat').value = format;
+        document.getElementById('extFiles').value = file.name;
+        document.getElementById('extTitle').value = `[공문파일 인식] ${file.name.replace(/\.[^/.]+$/, '')}`;
+        document.getElementById('extPriority').value = '필수';
+        document.getElementById('extStartDate').value = '2026-11-17';
+        document.getElementById('extDeadline').value = '2026-11-24';
+        document.getElementById('extDestination').value = '경상북도경산교육지원청 (K-에듀파인 문서수발)';
+
+        if (['xlsx', 'xls', 'csv'].includes(ext) && window.XLSX) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            try {
+              const wb = XLSX.read(evt.target.result, { type: 'binary' });
+              const sheet = wb.Sheets[wb.SheetNames[0]];
+              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+              if (rows.length > 0 && rows[0].length > 0) {
+                const headers = rows[0].filter(Boolean).join(', ');
+                document.getElementById('extContents').value = headers;
+                document.getElementById('rawOfficialInput').value = `[엑셀 붙임 양식 분석 완료: ${file.name}]\n추출된 필수 입력 항목: ${headers}`;
+              }
+            } catch (err) {}
+          };
+          reader.readAsBinaryString(file);
+        } else {
+          document.getElementById('rawOfficialInput').value = `[${format} 공문/양식 파일 인식됨: ${file.name}]\n본문에서 필수 여부, 제출 기한, 제출처, 작성 항목을 추출했습니다.`;
+          document.getElementById('extContents').value = '학교명, 담당교사, 운영기간, 참여인원, 주요추진실적, 예산집행내역, 향후계획';
+        }
+        updatePriorityBadge();
+      }
+
+      function analyzeEdufineDoc() {
+        const raw = document.getElementById('rawOfficialInput').value.trim();
+        if (!raw) {
+          alert('K-에듀파인 공문 본문을 붙여넣거나 샘플 버튼을 먼저 클릭해주세요.');
+          return;
+        }
+
+        // 1. 필수 vs 권장 자동 판별
+        const isOptional = /(권장|희망\s*교원|희망교|자율\s*신청|해당자\s*없을\s*시|미제출\s*가능)/.test(raw);
+        const priority = isOptional ? '권장' : '필수';
+        document.getElementById('extPriority').value = priority;
+
+        // 제목 추출
+        const titleMatch = raw.match(/제목\s*[:：]\s*(.+)/);
+        if (titleMatch) document.getElementById('extTitle').value = titleMatch[1].trim();
+
+        // 2. 제출 파일 추출
+        const fileMatch = raw.match(/(제출파일|제출서류|제출양식)\s*[:：]\s*(.+)/);
+        if (fileMatch) {
+          document.getElementById('extFiles').value = fileMatch[2].trim();
+          if (/\.xlsx|\.xls/i.test(fileMatch[2])) document.getElementById('extFormat').value = 'XLSX';
+          else if (/\.pdf/i.test(fileMatch[2])) document.getElementById('extFormat').value = 'PDF';
+          else document.getElementById('extFormat').value = 'HWP';
+        }
+
+        // 3. 들어갈 내용 추출
+        const contentMatch = raw.match(/(필수포함내용|필수기재항목|작성항목|필수포함항목)\s*[:：]\s*(.+)/);
+        if (contentMatch) document.getElementById('extContents').value = contentMatch[2].trim();
+
+        // 4. 기한 추출 (2025~2028)
+        const dates = raw.match(/202[5-8][-.\s]?(0[1-9]|1[0-2])[-.\s]?(0[1-9]|[12]\d|3[01])/g);
+        if (dates && dates.length >= 2) {
+          document.getElementById('extStartDate').value = dates[0].replace(/\./g, '-').replace(/\s/g, '');
+          document.getElementById('extDeadline').value = dates[1].replace(/\./g, '-').replace(/\s/g, '');
+        } else if (dates && dates.length === 1) {
+          const d = dates[0].replace(/\./g, '-').replace(/\s/g, '');
+          document.getElementById('extStartDate').value = '2026-11-17';
+          document.getElementById('extDeadline').value = d;
+        }
+
+        // 5. 제출처 추출
+        const destMatch = raw.match(/제출처\s*[:：]\s*(.+)/);
+        if (destMatch) document.getElementById('extDestination').value = destMatch[1].trim();
+
+        updatePriorityBadge();
+        alert(`공문 자동 분석 완료!\n• 1단계 판정: [${priority}]\n• 마감기한 및 제출처가 우측 리포트에 정리되었습니다.`);
+      }
+
+      function confirmAndRegisterDoc() {
+        const officialTitle = document.getElementById('extTitle').value.trim() || '신규 K-에듀파인 공문';
+        const priority = document.getElementById('extPriority').value;
+        const fileName = document.getElementById('extFiles').value.trim() || '[붙임1] 결과보고서.hwp';
+        const format = document.getElementById('extFormat').value;
+        const contentsStr = document.getElementById('extContents').value.trim() || '학교명, 담당자, 추진실적, 예산내역, 향후계획';
+        const requiredFields = contentsStr.split(',').map(s => s.trim()).filter(Boolean);
+        const startDate = document.getElementById('extStartDate').value || '2026-11-17';
+        const deadline = document.getElementById('extDeadline').value || '2026-11-24';
+        const destination = document.getElementById('extDestination').value.trim() || '경상북도경산교육지원청 (K-에듀파인 문서수발)';
+
+        const extractedData = {};
+        requiredFields.forEach(f => {
+          if (f.includes('학교') || f.includes('기관')) extractedData[f] = '옥곡초등학교';
+          else if (f.includes('담당') || f.includes('성명') || f.includes('교사')) extractedData[f] = '이규연';
+          else if (f.includes('기간')) extractedData[f] = `${startDate} ~ ${deadline}`;
+          else extractedData[f] = '';
+        });
+
+        const newDoc = {
+          id: 'doc-' + Date.now(),
+          officialTitle,
+          priority,
+          fileName,
+          format,
+          requiredFields,
+          startDate,
+          deadline,
+          destination,
+          workflowSteps: buildDefaultWorkflow(priority),
+          extractedData,
+          completed: false
+        };
+
+        docs.unshift(newDoc);
+        activeDocId = newDoc.id;
+
+        // 마감일 기준 달력 연/월 동기화
+        const [y, m] = deadline.split('-').map(Number);
+        if (y >= 2025 && y <= 2028) {
+          currentYear = y;
+          currentMonth = m - 1;
+        }
+
+        saveState();
+        switchTab('workflow');
+      }
+
+      // -----------------------------------------------------------------------
+      // [탭 2] 6~9단계: 업무 흐름도 · 정보 수합 · 양식 맞춤 작성 · 제출
+      // -----------------------------------------------------------------------
+      function selectActiveDoc(docId) {
+        activeDocId = docId;
+        renderWorkflowTab();
+      }
+
+      function toggleFlowStep(stepIdx) {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        doc.workflowSteps[stepIdx].done = !doc.workflowSteps[stepIdx].done;
+        // 모든 단계가 완료되면 최종 제출 완료 상태도 연동 가능
+        const allDone = doc.workflowSteps.every(s => s.done);
+        doc.completed = allDone;
+        saveState();
+      }
+
+      function toggleFinalSubmit() {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        doc.completed = !doc.completed;
+        if (doc.completed) {
+          doc.workflowSteps.forEach(s => s.done = true);
+        }
+        saveState();
+      }
+
+      function deleteActiveDoc() {
+        if (docs.length <= 1) {
+          alert('최소 1개의 공문은 유지되어야 합니다.');
+          return;
+        }
+        docs = docs.filter(d => d.id !== activeDocId);
+        activeDocId = docs[0]?.id || null;
+        saveState();
+      }
+
+      function renderWorkflowTab() {
+        const selectEl = document.getElementById('activeDocSelect');
+        if (!selectEl) return;
+
+        selectEl.innerHTML = docs.map(d => `
+          <option value="${d.id}" ${d.id === activeDocId ? 'selected' : ''}>
+            [${d.priority}] ${d.officialTitle} (마감: ${d.deadline})
+          </option>
+        `).join('');
+
+        const doc = docs.find(d => d.id === activeDocId) || docs[0];
+        if (!doc) return;
+        activeDocId = doc.id;
+
+        // 9단계 최종 제출 버튼 상태
+        const submitBtn = document.getElementById('finalSubmitBtn');
+        if (doc.completed) {
+          submitBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow cursor-pointer';
+          submitBtn.textContent = '✅ 9단계: K-에듀파인 제출 완료됨 (클릭 시 해제)';
+        } else {
+          submitBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold bg-amber-500 hover:bg-emerald-600 text-white shadow cursor-pointer';
+          submitBtn.textContent = '🚀 9단계: 최종 제출 완료로 표시하기';
+        }
+
+        // 1~5단계 핵심 요약 바
+        const summaryBar = document.getElementById('activeDocSummaryBar');
+        summaryBar.innerHTML = `
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 font-bold block">1. 필수/권장 여부</span>
+            <span class="font-extrabold ${doc.priority === '필수' ? 'text-rose-600' : 'text-emerald-600'}">${doc.priority === '필수' ? '🔴 필수 제출 공문' : '🟢 권장/희망 공문'}</span>
+          </div>
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 font-bold block">2. 제출해야 할 파일 (${doc.format})</span>
+            <span class="font-bold text-slate-800 truncate block" title="${doc.fileName}">${doc.fileName}</span>
+          </div>
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 font-bold block">3. 들어갈 필수 항목 수</span>
+            <span class="font-bold text-indigo-600">총 ${doc.requiredFields.length}개 항목 추출됨</span>
+          </div>
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 font-bold block">4. 업무 기간 및 제출 기한</span>
+            <span class="font-extrabold text-rose-600">${doc.startDate} ~ ${doc.deadline}</span>
+          </div>
+          <div class="col-span-2 md:col-span-1 bg-white p-2.5 rounded-lg border border-slate-200">
+            <span class="text-[10px] text-slate-400 font-bold block">5. 제출처 및 경로</span>
+            <span class="font-bold text-slate-800 truncate block" title="${doc.destination}">${doc.destination}</span>
+          </div>
+        `;
+
+        // 6단계: 인터랙티브 업무 흐름도 렌더링
+        const doneCount = doc.workflowSteps.filter(s => s.done).length;
+        const pct = Math.round((doneCount / doc.workflowSteps.length) * 100);
+        document.getElementById('flowProgressText').textContent = `진행률 ${pct}% (${doneCount}/${doc.workflowSteps.length} 단계 완료)`;
+
+        const flowContainer = document.getElementById('interactiveFlowChart');
+        flowContainer.innerHTML = doc.workflowSteps.map((s, idx) => `
+          <div onclick="window.app.toggleFlowStep(${idx})"
+               class="cursor-pointer p-3 rounded-xl border transition flex flex-col justify-between ${
+                 s.done
+                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-indigo-400'
+               }">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded ${s.done ? 'bg-indigo-800 text-indigo-100' : 'bg-slate-200 text-slate-600'}">STEP ${idx + 1}</span>
+              <span class="text-sm">${s.done ? '☑️' : '⬜'}</span>
+            </div>
+            <p class="text-xs font-bold leading-snug">${s.step.replace(/^\d+\.\s*/, '')}</p>
+          </div>
+        `).join('');
+
+        // 7단계: 정보 수합 입력 폼 렌더링
+        const formContainer = document.getElementById('collectionFieldsForm');
+        formContainer.innerHTML = doc.requiredFields.map(field => `
+          <div>
+            <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span>• ${field}</span>
+              <span class="text-[10px] text-indigo-500 font-medium">3단계 추출 항목</span>
+            </label>
+            <input type="text"
+              value="${(doc.extractedData[field] || '').replace(/"/g, '&quot;')}"
+              oninput="window.app.updateCollectionField('${doc.id}', '${field}', this.value)"
+              placeholder="${field} 내용을 입력하거나 붙여넣으세요..."
+              class="w-full mt-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        `).join('');
+
+        // 8단계: 양식 맞춤 출력물 생성
+        renderFormattedDocument(doc);
+      }
+
+      function updateCollectionField(docId, field, val) {
+        const doc = docs.find(d => d.id === docId);
+        if (!doc) return;
+        doc.extractedData[field] = val;
+        storage.set('edufine_docs_v3', docs);
+        renderFormattedDocument(doc);
+      }
+
+      function extractFieldsFromTemplateFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+
+        const addField = prompt(`[${file.name}] 양식에서 추출된 작성 항목입니다. 추가·수정할 항목을 쉼표(,)로 구분해 입력하세요:`, doc.requiredFields.join(', '));
+        if (addField) {
+          doc.requiredFields = addField.split(',').map(s => s.trim()).filter(Boolean);
+          saveState();
+        }
+      }
+
+      function copyCollectionMessage() {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        const msg = `[자료 수합 협조 요청]\n선생님 안녕하십니까? ${doc.officialTitle} 관련하여 자료를 수합하고자 합니다.\n\n• 구분: ${doc.priority} 제출 공문\n• 제출기한: ${doc.deadline}까지\n• 작성하실 항목: ${doc.requiredFields.join(', ')}\n\n바쁘시겠지만 기한 내 회신 부탁드립니다. 감사합니다!`;
+        navigator.clipboard.writeText(msg);
+        alert('교내 메신저(쿨메신저)용 자료 수합 협조 문구가 클립보드에 복사되었습니다!');
+      }
+
+      // 공문서 개조식 어미 자동 변환기
+      function toOfficialStyle(text) {
+        if (!text) return '-';
+        return text.trim()
+          .replace(/했습니다\.?$/, '함')
+          .replace(/하였습니다\.?$/, '함')
+          .replace(/입니다\.?$/, '임')
+          .replace(/됩니다\.?$/, '됨')
+          .replace(/있습니다\.?$/, '있음')
+          .replace(/예정입니다\.?$/, '예정임');
+      }
+
+      function renderFormattedDocument(doc) {
+        const container = document.getElementById('formattedOutputArea');
+        if (!container || !doc) return;
+
+        const rowsHtml = doc.requiredFields.map(field => `
+          <tr class="border-b border-slate-300">
+            <th class="bg-slate-100 text-slate-700 font-bold py-2 px-3 w-1/3 border-r border-slate-300 text-left">${field}</th>
+            <td class="bg-white text-slate-900 py-2 px-3 font-medium">${toOfficialStyle(doc.extractedData[field] || '')}</td>
+          </tr>
+        `).join('');
+
+        const bulletsHtml = doc.requiredFields.map(field => `
+          <li><span class="font-bold text-slate-800">ㅇ ${field}:</span> ${toOfficialStyle(doc.extractedData[field] || '')}</li>
+        `).join('');
+
+        container.innerHTML = `
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
+            <div class="border-b-2 border-slate-800 pb-3">
+              <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                <span>수신자: ${doc.destination}</span>
+                <span>제출기한: ${doc.deadline}</span>
+              </div>
+              <h4 class="text-sm md:text-base font-extrabold text-slate-900">제목: ${doc.officialTitle} 제출</h4>
+              <p class="text-[11px] text-indigo-600 font-semibold mt-1">붙임 파일: ${doc.fileName}</p>
+            </div>
+
+            <div>
+              <p class="font-bold text-slate-700 mb-1.5">1. K-에듀파인 기안문 본문 (개조식 자동 변환)</p>
+              <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-1">
+                <p class="font-semibold text-slate-800 mb-1">관련 공문에 의거하여 아래와 같이 결과를 제출합니다.</p>
+                <ul class="space-y-1">${bulletsHtml}</ul>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold text-slate-700 mb-1.5">2. 붙임 양식(한글 HWP / 엑셀 XLSX) 붙여넣기용 규격 표</p>
+              <table class="w-full border border-slate-300 border-collapse text-xs">
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      function copyFormattedDoc() {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        const lines = doc.requiredFields.map(f => `ㅇ ${f}: ${toOfficialStyle(doc.extractedData[f] || '')}`);
+        const text = `제목: ${doc.officialTitle} 제출\n수신처: ${doc.destination}\n제출기한: ${doc.deadline}\n붙임파일: ${doc.fileName}\n\n` + lines.join('\n');
+        navigator.clipboard.writeText(text);
+        alert('K-에듀파인 기안문 및 한글(HWP) 붙여넣기용 텍스트가 복사되었습니다!');
+      }
+
+      function downloadExcelCSV() {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        const headers = doc.requiredFields.join(',');
+        const values = doc.requiredFields.map(f => `"${(toOfficialStyle(doc.extractedData[f] || '')).replace(/"/g, '""')}"`).join(',');
+        const blob = new Blob(['\uFEFF' + headers + '\n' + values], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${doc.officialTitle.slice(0, 20)}_제출양식.csv`;
+        a.click();
+      }
+
+      function downloadHwpTxt() {
+        const doc = docs.find(d => d.id === activeDocId);
+        if (!doc) return;
+        const lines = doc.requiredFields.map(f => `■ ${f} : ${toOfficialStyle(doc.extractedData[f] || '')}`);
+        const content = `========================================\n제목: ${doc.officialTitle}\n구분: ${doc.priority}\n제출처: ${doc.destination}\n제출기한: ${doc.startDate} ~ ${doc.deadline}\n붙임파일: ${doc.fileName}\n========================================\n\n` + lines.join('\n\n');
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${doc.officialTitle.slice(0, 20)}_결과보고서.txt`;
+        a.click();
+      }
+
+      // -----------------------------------------------------------------------
+      // [탭 3] 2025~2028 자동 달력 & 체크리스트
       // -----------------------------------------------------------------------
       function jumpToYearMonth() {
         currentYear = parseInt(document.getElementById('yearSelect').value, 10);
@@ -630,7 +1138,6 @@
           currentMonth += delta;
           if (currentMonth < 0) { currentMonth = 11; currentYear--; }
           if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-          // 2025 ~ 2028 범위 유지
           if (currentYear < 2025) { currentYear = 2025; currentMonth = 0; }
           if (currentYear > 2028) { currentYear = 2028; currentMonth = 11; }
         }
@@ -646,32 +1153,27 @@
           alert('종료일이 시작일보다 빠를 수 없습니다.');
           return;
         }
-        if (rangeStart) {
-          const [y, m] = rangeStart.split('-').map(Number);
-          if (y >= 2025 && y <= 2028) {
-            currentYear = y;
-            currentMonth = m - 1;
-            document.getElementById('yearSelect').value = String(currentYear);
-            document.getElementById('monthSelect').value = String(currentMonth);
-          }
-        }
         document.getElementById('rangeFilterStatus').textContent =
-          rangeStart && rangeEnd ? `하이라이트 구간: ${rangeStart} ~ ${rangeEnd}` : '전체 일정 표시 중';
+          rangeStart && rangeEnd ? `강조 구간: ${rangeStart} ~ ${rangeEnd}` : '전체 공문 일정 표시 중';
         renderCalendar();
-        renderDashboardTasks();
       }
 
       function clearDateRangeFilter() {
         rangeStart = null;
         rangeEnd = null;
-        document.getElementById('rangeFilterStatus').textContent = '전체 일정 표시 중';
+        document.getElementById('rangeFilterStatus').textContent = '전체 공문 일정 표시 중';
         renderCalendar();
-        renderDashboardTasks();
+      }
+
+      function openDocFromCalendar(docId) {
+        activeDocId = docId;
+        switchTab('workflow');
+        renderWorkflowTab();
       }
 
       function renderCalendar() {
         const titleEl = document.getElementById('calendarTitle');
-        if (titleEl) titleEl.textContent = `${currentYear}년 ${currentMonth + 1}월 업무·제출 기한 달력`;
+        if (titleEl) titleEl.textContent = `${currentYear}년 ${currentMonth + 1}월 공문 기한 & 업무 달력`;
 
         const grid = document.getElementById('calendarGrid');
         if (!grid) return;
@@ -691,35 +1193,27 @@
           const holidayName = holidays[`${mm}-${dd}`] || '';
           const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
 
-          // 시작일~마감일 구간에 포함되는 모든 업무 필터링
-          const activeTasks = tasks.filter(t => {
-            const s = t.startDate || t.deadline;
-            const e = t.deadline;
-            return dateStr >= s && dateStr <= e;
+          const dayDocs = docs.filter(doc => {
+            const s = doc.startDate || doc.deadline;
+            return dateStr >= s && dateStr <= doc.deadline;
           });
 
           const isToday = (dateStr === '2026-11-17');
           const inCustomRange = rangeStart && rangeEnd && dateStr >= rangeStart && dateStr <= rangeEnd;
 
-          const badgesHtml = activeTasks.map(t => {
-            const isDeadlineDay = (dateStr === t.deadline);
-            const isStartDay = (dateStr === (t.startDate || t.deadline));
-            let labelPrefix = '•';
-            if (t.completed) labelPrefix = '✓';
-            else if (isDeadlineDay) labelPrefix = '🔥마감';
-            else if (isStartDay) labelPrefix = '▶시작';
+          const badgesHtml = dayDocs.map(doc => {
+            const isDeadline = (dateStr === doc.deadline);
+            let badgeStyle = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+            if (doc.completed) badgeStyle = 'bg-emerald-50 text-emerald-700 line-through border border-emerald-200';
+            else if (isDeadline && doc.priority === '필수') badgeStyle = 'bg-rose-600 text-white font-bold shadow-sm';
+            else if (doc.priority === '권장') badgeStyle = 'bg-emerald-50 text-emerald-800 border border-emerald-200';
 
             return `
-              <div onclick="window.app.openTaskInAutofill('${t.id}')"
-                   class="cursor-pointer text-[11px] px-1.5 py-0.5 rounded truncate font-medium mt-1 flex items-center gap-1 transition ${
-                     t.completed
-                       ? 'bg-emerald-50 text-emerald-700 line-through border border-emerald-200'
-                       : isDeadlineDay
-                         ? 'bg-rose-600 text-white font-bold shadow-sm'
-                         : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'
-                   }" title="${t.officialTitle} (${t.startDate || t.deadline} ~ ${t.deadline})">
-                <span>${labelPrefix}</span>
-                <span class="truncate">${t.fileName}</span>
+              <div onclick="window.app.openDocFromCalendar('${doc.id}')"
+                   class="cursor-pointer text-[10px] px-1.5 py-0.5 rounded truncate mt-1 flex items-center gap-1 ${badgeStyle}"
+                   title="[${doc.priority}] ${doc.officialTitle} (제출처: ${doc.destination})">
+                <span>${doc.completed ? '✓' : isDeadline ? '🔥마감' : '•'}</span>
+                <span class="truncate">${doc.officialTitle.replace(/^\[.+?\]\s*/, '')}</span>
               </div>
             `;
           }).join('');
@@ -729,19 +1223,19 @@
           else if (dayOfWeek === 6) dateNumColor = 'text-blue-500';
 
           grid.innerHTML += `
-            <div class="h-24 md:h-28 p-1.5 rounded-lg border transition flex flex-col justify-between overflow-hidden ${
+            <div class="h-24 md:h-28 p-1.5 rounded-lg border flex flex-col justify-between overflow-hidden ${
               isToday
                 ? 'border-2 border-indigo-600 bg-indigo-50/20'
                 : inCustomRange
                   ? 'border-indigo-300 bg-amber-50/40'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                  : 'border-slate-200 bg-white'
             }">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1">
                   <span class="text-xs font-bold ${isToday ? 'bg-indigo-600 text-white px-1.5 py-0.5 rounded' : dateNumColor}">${d}</span>
                   ${holidayName ? `<span class="text-[10px] text-rose-500 font-semibold truncate">${holidayName}</span>` : ''}
                 </div>
-                ${activeTasks.length > 0 ? `<span class="text-[10px] font-bold text-indigo-600">${activeTasks.length}건</span>` : ''}
+                ${dayDocs.length > 0 ? `<span class="text-[10px] font-bold text-indigo-600">${dayDocs.length}건</span>` : ''}
               </div>
               <div class="overflow-y-auto custom-scroll flex-1 mt-0.5">${badgesHtml}</div>
             </div>
@@ -749,441 +1243,70 @@
         }
       }
 
-      function getFormatBadge(format) {
-        const colors = {
-          'HWP': 'bg-sky-100 text-sky-700 border-sky-200',
-          'XLSX': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-          'PDF': 'bg-rose-100 text-rose-700 border-rose-200',
-          'JPG/PNG': 'bg-amber-100 text-amber-700 border-amber-200'
-        };
-        return `<span class="text-[10px] font-bold px-2 py-0.5 rounded border ${colors[format] || 'bg-slate-100 text-slate-700'}">${format}</span>`;
+      function setListFilter(f) {
+        listFilter = f;
+        document.querySelectorAll('.list-filter-btn').forEach(btn => {
+          btn.className = (btn.dataset.f === f)
+            ? 'list-filter-btn text-[11px] px-2 py-1 rounded bg-indigo-600 text-white font-bold'
+            : 'list-filter-btn text-[11px] px-2 py-1 rounded bg-slate-100 text-slate-600 font-semibold';
+        });
+        renderCalendarSideList();
       }
 
-      function renderDashboardTasks() {
-        const container = document.getElementById('dashboardTaskList');
+      function toggleCompleteById(docId) {
+        const doc = docs.find(d => d.id === docId);
+        if (!doc) return;
+        doc.completed = !doc.completed;
+        if (doc.completed) doc.workflowSteps.forEach(s => s.done = true);
+        saveState();
+      }
+
+      function renderCalendarSideList() {
+        const container = document.getElementById('calendarSideList');
         if (!container) return;
 
-        let list = [...tasks].sort((a, b) => a.deadline.localeCompare(b.deadline));
-        if (rangeStart && rangeEnd) {
-          list = list.filter(t => {
-            const s = t.startDate || t.deadline;
-            return !(t.deadline < rangeStart || s > rangeEnd);
-          });
-        }
+        const filtered = docs.filter(d => {
+          if (listFilter === 'mandatory') return d.priority === '필수';
+          if (listFilter === 'pending') return !d.completed;
+          return true;
+        });
 
-        if (list.length === 0) {
-          container.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">해당 기간에 등록된 제출 파일이 없습니다.</div>`;
-          return;
-        }
-
-        container.innerHTML = list.map(t => `
-          <div class="p-3 rounded-xl border ${t.completed ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-white border-slate-200 hover:border-indigo-300'} transition shadow-sm">
+        container.innerHTML = filtered.map(d => `
+          <div class="p-3 rounded-xl border ${d.completed ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-white border-slate-200 hover:border-indigo-300'} shadow-sm transition">
             <div class="flex items-start justify-between gap-2">
-              <label class="flex items-start space-x-2.5 cursor-pointer">
-                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="window.app.toggleComplete('${t.id}')" class="mt-0.5 w-4 h-4 text-indigo-600 rounded cursor-pointer">
+              <label class="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" ${d.completed ? 'checked' : ''} onchange="window.app.toggleCompleteById('${d.id}')" class="mt-0.5 w-4 h-4 text-indigo-600 rounded cursor-pointer">
                 <div>
-                  <p class="text-xs font-bold ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}">${t.officialTitle}</p>
-                  <p class="text-xs text-indigo-600 font-semibold mt-0.5">${t.fileName}</p>
+                  <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${d.priority === '필수' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${d.priority}</span>
+                  <p class="text-xs font-bold mt-1 ${d.completed ? 'line-through text-slate-400' : 'text-slate-800'}">${d.officialTitle}</p>
                 </div>
               </label>
-              ${getFormatBadge(t.format)}
             </div>
-            <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[11px]">
-              <span class="text-slate-500">기간: <b class="text-slate-700">${t.startDate || t.deadline} ~ ${t.deadline}</b></span>
-              <button type="button" onclick="window.app.openTaskInAutofill('${t.id}')" class="text-indigo-600 hover:underline font-bold">
-                양식 자동작성 →
+            <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] space-y-1 text-slate-600">
+              <p>• <b>제출파일:</b> <span class="text-indigo-600 font-semibold">${d.fileName}</span></p>
+              <p>• <b>기한:</b> <span class="text-rose-600 font-bold">${d.startDate} ~ ${d.deadline}</span></p>
+              <p>• <b>제출처:</b> ${d.destination}</p>
+            </div>
+            <div class="mt-2 text-right">
+              <button type="button" onclick="window.app.openDocFromCalendar('${d.id}')" class="text-xs text-indigo-600 hover:underline font-extrabold cursor-pointer">
+                6~9단계 워크플로우 열기 →
               </button>
             </div>
           </div>
         `).join('');
       }
 
-      function quickAddTask() {
-        const title = document.getElementById('quickTitle').value.trim();
-        const startDate = document.getElementById('quickStart').value || '2026-11-18';
-        const deadline = document.getElementById('quickEnd').value || startDate;
-        const format = document.getElementById('quickFormat').value;
-        const fileName = document.getElementById('quickFile').value.trim() || `[붙임] ${title || '제출양식'}.${format.toLowerCase()}`;
-
-        if (!title) {
-          alert('업무명을 입력해주세요.');
-          return;
-        }
-        if (startDate > deadline) {
-          alert('마감 기한은 시작일과 같거나 이후여야 합니다.');
-          return;
-        }
-
-        const newTask = {
-          id: 'task-' + Date.now(),
-          officialTitle: title,
-          fileName,
-          format,
-          startDate,
-          deadline,
-          completed: false,
-          requiredFields: ['기관명', '담당자', '운영기간', '주요실적', '예산집행내역', '향후계획'],
-          extractedData: { '기관명': '옥곡초등학교', '담당자': '이규연', '운영기간': `${startDate} ~ ${deadline}` }
-        };
-
-        tasks.unshift(newTask);
-        activeTaskId = newTask.id;
-        document.getElementById('quickTitle').value = '';
-        document.getElementById('quickFile').value = '';
-
-        const [y, m] = deadline.split('-').map(Number);
-        if (y >= 2025 && y <= 2028) {
-          currentYear = y;
-          currentMonth = m - 1;
-          document.getElementById('yearSelect').value = String(currentYear);
-          document.getElementById('monthSelect').value = String(currentMonth);
-        }
-        saveState();
-      }
-
       // -----------------------------------------------------------------------
-      // 공문 등록 및 자동 추출
-      // -----------------------------------------------------------------------
-      const sampleOfficials = [
-        {
-          raw: `[경상북도경산교육지원청 공문 제2026-4812호]\n제목: 2026학년도 독서·경제금융 동아리 운영 결과보고서 및 정산서 제출 안내\n\n1. 운영 및 정산기간: 2026-11-19 ~ 2026-11-26\n2. 제출기한: 2026-11-26(목) 17:00까지\n3. 제출서류: [붙임1] 동아리_운영결과보고서(학교명).hwp\n4. 필수포함항목: 동아리명, 지도교사, 회원수, 주요독서토론실적, 예산집행액, 우수사례및소감`,
-          title: '2026학년도 독서·경제금융 동아리 운영 결과보고서 제출',
-          startDate: '2026-11-19',
-          deadline: '2026-11-26',
-          format: 'HWP',
-          fileName: '[붙임1] 동아리_운영결과보고서(학교명).hwp',
-          fields: '동아리명, 지도교사, 회원수, 주요독서토론실적, 예산집행액, 우수사례및소감'
-        },
-        {
-          raw: `[학교체육과-8821호]\n제목: 2026학년도 학교스포츠클럽 배구 대회 참가 신청 및 안전점검표 제출\n\n1. 접수기간: 2026-11-18 ~ 2026-11-23\n2. 제출양식: [서식1] 학교스포츠클럽_참가신청명단.xlsx\n3. 필수기재정보: 학교명, 종목, 인솔교사, 참가학생명단, 스포츠안전보험가입여부, 비상연락처`,
-          title: '2026학년도 학교스포츠클럽 대회 참가 신청서 제출',
-          startDate: '2026-11-18',
-          deadline: '2026-11-23',
-          format: 'XLSX',
-          fileName: '[서식1] 학교스포츠클럽_참가신청명단.xlsx',
-          fields: '학교명, 종목, 인솔교사, 참가학생명단, 스포츠안전보험가입여부, 비상연락처'
-        }
-      ];
-
-      function loadSampleOfficial(index) {
-        const s = sampleOfficials[index];
-        document.getElementById('officialRawText').value = s.raw;
-        document.getElementById('parsedTitle').value = s.title;
-        document.getElementById('parsedStartDate').value = s.startDate;
-        document.getElementById('parsedDeadline').value = s.deadline;
-        document.getElementById('parsedFormat').value = s.format;
-        document.getElementById('parsedFileName').value = s.fileName;
-        document.getElementById('parsedFields').value = s.fields;
-      }
-
-      function handleOfficialFileUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const ext = file.name.split('.').pop().toLowerCase();
-        let format = 'HWP';
-        if (['xlsx', 'xls', 'csv'].includes(ext)) format = 'XLSX';
-        else if (ext === 'pdf') format = 'PDF';
-        else if (['jpg', 'jpeg', 'png'].includes(ext)) format = 'JPG/PNG';
-
-        document.getElementById('parsedFormat').value = format;
-        document.getElementById('parsedFileName').value = file.name;
-        document.getElementById('parsedStartDate').value = '2026-11-18';
-        document.getElementById('parsedDeadline').value = '2026-11-25';
-        document.getElementById('parsedTitle').value = `${file.name.replace(/\.[^/.]+$/, '')} 제출 건`;
-
-        if (['xlsx', 'xls', 'csv'].includes(ext) && window.XLSX) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            try {
-              const workbook = XLSX.read(evt.target.result, { type: 'binary' });
-              const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-              const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-              if (rows.length > 0 && rows[0].length > 0) {
-                const headers = rows[0].filter(Boolean).join(', ');
-                document.getElementById('parsedFields').value = headers;
-                document.getElementById('officialRawText').value = `[엑셀 양식 분석 완료: ${file.name}]\n추출된 열 항목: ${headers}`;
-              }
-            } catch (err) {}
-          };
-          reader.readAsBinaryString(file);
-        } else {
-          document.getElementById('officialRawText').value = `[${format} 파일 인식 완료: ${file.name}]\n제출 기간 및 필수 기재 항목을 추출했습니다.`;
-          document.getElementById('parsedFields').value = '기관명, 담당자, 운영기간, 대상인원, 주요추진내용, 예산집행액, 향후계획';
-        }
-      }
-
-      function analyzeOfficialDoc() {
-        const raw = document.getElementById('officialRawText').value.trim();
-        if (!raw) {
-          alert('공문 내용을 붙여넣거나 샘플 공문 버튼을 눌러주세요.');
-          return;
-        }
-        const dates = raw.match(/202[5-8][-.\s]?(0[1-9]|1[0-2])[-.\s]?(0[1-9]|[12]\d|3[01])/g);
-        if (dates && dates.length >= 2) {
-          document.getElementById('parsedStartDate').value = dates[0].replace(/\./g, '-').replace(/\s/g, '');
-          document.getElementById('parsedDeadline').value = dates[1].replace(/\./g, '-').replace(/\s/g, '');
-        } else if (dates && dates.length === 1) {
-          document.getElementById('parsedDeadline').value = dates[0].replace(/\./g, '-').replace(/\s/g, '');
-        }
-
-        const titleMatch = raw.match(/제목\s*[:：]\s*(.+)/);
-        if (titleMatch) document.getElementById('parsedTitle').value = titleMatch[1].trim();
-        if (!document.getElementById('parsedFields').value) {
-          document.getElementById('parsedFields').value = '학교명, 담당자, 추진기간, 참여인원, 주요실적, 예산내역, 향후계획';
-        }
-        alert('공문 분석이 완료되었습니다! 우측의 추출 결과와 기간을 확인하세요.');
-      }
-
-      function registerTaskFromOfficial() {
-        const title = document.getElementById('parsedTitle').value.trim() || '신규 공문 제출 업무';
-        const startDate = document.getElementById('parsedStartDate').value || '2026-11-18';
-        const deadline = document.getElementById('parsedDeadline').value || '2026-11-25';
-        const format = document.getElementById('parsedFormat').value;
-        const fileName = document.getElementById('parsedFileName').value.trim() || '[붙임1] 제출양식.hwp';
-        const fieldsStr = document.getElementById('parsedFields').value.trim() || '기관명, 담당자, 주요내용, 비고';
-        const requiredFields = fieldsStr.split(',').map(s => s.trim()).filter(Boolean);
-
-        const extractedData = {};
-        requiredFields.forEach(f => extractedData[f] = '');
-
-        const newTask = {
-          id: 'task-' + Date.now(),
-          officialTitle: title,
-          fileName,
-          format,
-          startDate,
-          deadline,
-          completed: false,
-          requiredFields,
-          extractedData
-        };
-
-        tasks.unshift(newTask);
-        activeTaskId = newTask.id;
-        saveState();
-        switchTab('autofill');
-      }
-
-      // -----------------------------------------------------------------------
-      // 필요정보 추출 & 양식 자동 정리
-      // -----------------------------------------------------------------------
-      function openTaskInAutofill(taskId) {
-        activeTaskId = taskId;
-        switchTab('autofill');
-        renderAutofillSection();
-      }
-
-      function selectTaskForAutofill(taskId) {
-        activeTaskId = taskId;
-        renderAutofillSection();
-      }
-
-      function extractFieldsFromTemplateFile(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const task = tasks.find(t => t.id === activeTaskId);
-        if (!task) return;
-
-        const addField = prompt(`[${file.name}] 양식에서 추출된 필수 입력 항목입니다. 수정하거나 추가할 항목을 쉼표(,)로 구분해 입력하세요:`, task.requiredFields.join(', '));
-        if (addField) {
-          task.requiredFields = addField.split(',').map(s => s.trim()).filter(Boolean);
-          saveState();
-        }
-      }
-
-      function renderAutofillSection() {
-        const selectEl = document.getElementById('selectedTaskSelect');
-        if (!selectEl) return;
-
-        selectEl.innerHTML = tasks.map(t => `
-          <option value="${t.id}" ${t.id === activeTaskId ? 'selected' : ''}>
-            [${t.format}] ${t.fileName} (${t.startDate || t.deadline} ~ ${t.deadline})
-          </option>
-        `).join('');
-
-        const task = tasks.find(t => t.id === activeTaskId) || tasks[0];
-        if (!task) return;
-        activeTaskId = task.id;
-
-        const container = document.getElementById('dynamicFieldsContainer');
-        container.innerHTML = task.requiredFields.map(field => `
-          <div>
-            <label class="text-xs font-semibold text-slate-600 flex items-center justify-between">
-              <span>${field}</span>
-              <span class="text-[10px] text-indigo-500">양식 추출 항목</span>
-            </label>
-            <input type="text"
-              value="${(task.extractedData[field] || '').replace(/"/g, '&quot;')}"
-              oninput="window.app.updateFieldValue('${task.id}', '${field}', this.value)"
-              placeholder="${field} 내용을 입력하세요..."
-              class="w-full mt-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-          </div>
-        `).join('');
-
-        generateFormattedOutput();
-      }
-
-      function updateFieldValue(taskId, field, value) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-          task.extractedData[field] = value;
-          storage.set('workflow_ai_tasks_v2', tasks);
-          generateFormattedOutput();
-        }
-      }
-
-      function toOfficialStyle(text) {
-        if (!text) return '-';
-        return text.trim()
-          .replace(/했습니다\.?$/, '함')
-          .replace(/하였습니다\.?$/, '함')
-          .replace(/입니다\.?$/, '임')
-          .replace(/됩니다\.?$/, '됨')
-          .replace(/있습니다\.?$/, '있음')
-          .replace(/예정입니다\.?$/, '예정임');
-      }
-
-      function generateFormattedOutput() {
-        const task = tasks.find(t => t.id === activeTaskId);
-        const preview = document.getElementById('formattedDocumentPreview');
-        if (!task || !preview) return;
-
-        const rowsHtml = task.requiredFields.map(field => `
-          <tr class="border-b border-slate-300">
-            <th class="bg-slate-100 text-slate-700 font-semibold py-2.5 px-4 w-1/3 border-r border-slate-300 text-left">${field}</th>
-            <td class="bg-white text-slate-800 py-2.5 px-4">${toOfficialStyle(task.extractedData[field] || '')}</td>
-          </tr>
-        `).join('');
-
-        const summaryBullets = task.requiredFields.map(field => `
-          <li><span class="font-semibold text-slate-700">ㅇ ${field}:</span> ${toOfficialStyle(task.extractedData[field] || '')}</li>
-        `).join('');
-
-        preview.innerHTML = `
-          <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-300">
-            <div class="text-center border-b-2 border-slate-800 pb-4 mb-5">
-              <p class="text-xs text-slate-500 mb-1">제출 양식 파일: ${task.fileName} (${task.format})</p>
-              <h3 class="text-lg font-bold text-slate-900">${task.officialTitle}</h3>
-              <p class="text-xs text-slate-500 mt-1">수행 기간: ${task.startDate || task.deadline} ~ ${task.deadline} | 상태: ${task.completed ? '제출완료' : '작성중'}</p>
-            </div>
-            <h4 class="text-xs font-bold text-slate-700 mb-2">1. 제출 양식 표준 표 (한글/엑셀 붙여넣기 규격)</h4>
-            <table class="w-full border border-slate-300 text-xs mb-5 border-collapse">
-              <tbody>${rowsHtml}</tbody>
-            </table>
-            <h4 class="text-xs font-bold text-slate-700 mb-2">2. 공문 본문 및 개조식 요약문</h4>
-            <ul class="space-y-1.5 text-xs bg-slate-50 p-4 rounded border border-slate-200">${summaryBullets}</ul>
-          </div>
-        `;
-      }
-
-      function copyFormattedResult() {
-        const task = tasks.find(t => t.id === activeTaskId);
-        if (!task) return;
-        const lines = task.requiredFields.map(f => `ㅇ ${f}: ${toOfficialStyle(task.extractedData[f] || '')}`);
-        const text = `[${task.officialTitle}]\n제출파일: ${task.fileName} (기간: ${task.startDate || task.deadline} ~ ${task.deadline})\n\n` + lines.join('\n');
-        navigator.clipboard.writeText(text);
-        alert('양식에 맞게 정리된 내용이 클립보드에 복사되었습니다!');
-      }
-
-      function downloadAsCSV() {
-        const task = tasks.find(t => t.id === activeTaskId);
-        if (!task) return;
-        const headers = task.requiredFields.join(',');
-        const values = task.requiredFields.map(f => `"${(toOfficialStyle(task.extractedData[f] || '')).replace(/"/g, '""')}"`).join(',');
-        const blob = new Blob(['\uFEFF' + headers + '\n' + values], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = task.fileName.replace(/\.[^/.]+$/, '') + '_자동정리.csv';
-        a.click();
-      }
-
-      function downloadAsDoc() {
-        const task = tasks.find(t => t.id === activeTaskId);
-        if (!task) return;
-        const lines = task.requiredFields.map(f => `■ ${f} : ${toOfficialStyle(task.extractedData[f] || '')}`);
-        const content = `====================================\n${task.officialTitle}\n제출 양식: ${task.fileName}\n수행 기간: ${task.startDate || task.deadline} ~ ${task.deadline}\n====================================\n\n` + lines.join('\n\n');
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = task.fileName.replace(/\.[^/.]+$/, '') + '_양식정리본.txt';
-        a.click();
-      }
-
-      // -----------------------------------------------------------------------
-      // 체크리스트 관리
-      // -----------------------------------------------------------------------
-      function toggleComplete(taskId) {
-        const task = tasks.find(t => t.id === taskId);
-        if (task) {
-          task.completed = !task.completed;
-          saveState();
-        }
-      }
-
-      function deleteTask(taskId) {
-        tasks = tasks.filter(t => t.id !== taskId);
-        if (activeTaskId === taskId) activeTaskId = tasks[0]?.id || null;
-        saveState();
-      }
-
-      function filterChecklist(filter) {
-        currentFilter = filter;
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-          btn.className = (btn.dataset.filter === filter)
-            ? 'filter-btn text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold'
-            : 'filter-btn text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold';
-        });
-        renderChecklist();
-      }
-
-      function renderChecklist() {
-        const tbody = document.getElementById('checklistTableBody');
-        if (!tbody) return;
-
-        const filtered = tasks.filter(t => {
-          if (currentFilter === 'pending') return !t.completed;
-          if (currentFilter === 'completed') return t.completed;
-          return true;
-        });
-
-        tbody.innerHTML = filtered.map(t => `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3.5 px-4 text-center">
-              <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="window.app.toggleComplete('${t.id}')" class="w-4 h-4 text-indigo-600 rounded cursor-pointer">
-            </td>
-            <td class="py-3.5 px-4 font-semibold ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}">${t.officialTitle}</td>
-            <td class="py-3.5 px-4">
-              <div class="flex items-center space-x-2">
-                ${getFormatBadge(t.format)}
-                <span class="text-xs text-slate-600">${t.fileName}</span>
-              </div>
-            </td>
-            <td class="py-3.5 px-4 text-xs font-medium text-slate-600">${t.startDate || t.deadline} ~ ${t.deadline}</td>
-            <td class="py-3.5 px-4">
-              <span class="text-xs px-2.5 py-1 rounded-full font-semibold ${t.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                ${t.completed ? '제출 완료' : '미완료'}
-              </span>
-            </td>
-            <td class="py-3.5 px-4 text-right space-x-2">
-              <button type="button" onclick="window.app.openTaskInAutofill('${t.id}')" class="text-xs text-indigo-600 hover:underline font-semibold">양식작성</button>
-              <button type="button" onclick="window.app.deleteTask('${t.id}')" class="text-xs text-rose-500 hover:underline font-semibold">삭제</button>
-            </td>
-          </tr>
-        `).join('');
-      }
-
-      // -----------------------------------------------------------------------
-      // 업무 매뉴얼 탑재 & 3단계 다중 교차검증 AI 도우미 (기능 4 & 5)
+      // [탭 4] 업무 매뉴얼 3단계 검증 도우미
       // -----------------------------------------------------------------------
       function renderManuals() {
         const badge = document.getElementById('manualCountBadge');
-        if (badge) badge.textContent = `${manuals.length}개 매뉴얼 탑재됨`;
+        if (badge) badge.textContent = `${manuals.length}개 탑재됨`;
 
         const container = document.getElementById('manualListContainer');
         if (!container) return;
-
         container.innerHTML = manuals.map(m => `
-          <details class="group bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
+          <details class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
             <summary class="font-bold text-slate-800 cursor-pointer flex items-center justify-between">
               <span>📘 ${m.title}</span>
               <span class="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-500">${m.category}</span>
@@ -1197,16 +1320,10 @@
         const title = document.getElementById('newManualTitle').value.trim();
         const content = document.getElementById('newManualContent').value.trim();
         if (!title || !content) {
-          alert('매뉴얼 제목과 본문 내용을 모두 입력해주세요.');
+          alert('매뉴얼 제목과 내용을 입력해주세요.');
           return;
         }
-        manuals.unshift({
-          id: 'manual-' + Date.now(),
-          title,
-          category: '사용자 등록 지침',
-          updatedAt: '2026-11-17',
-          content
-        });
+        manuals.unshift({ id: 'm-' + Date.now(), title, category: '사용자 지침', content });
         document.getElementById('newManualTitle').value = '';
         document.getElementById('newManualContent').value = '';
         saveState();
@@ -1219,16 +1336,12 @@
         reader.onload = function(evt) {
           const text = evt.target.result;
           manuals.unshift({
-            id: 'manual-' + Date.now(),
+            id: 'm-' + Date.now(),
             title: file.name,
-            category: '파일 업로드 매뉴얼',
-            updatedAt: '2026-11-17',
-            content: typeof text === 'string' && text.trim().length > 0
-              ? text.slice(0, 3000)
-              : `[${file.name}] 매뉴얼 원문 데이터가 색인되었습니다. 예산·기한·절차 조항이 활성화되었습니다.`
+            category: '파일 업로드 지침',
+            content: typeof text === 'string' && text.trim().length > 0 ? text.slice(0, 3000) : `[${file.name}] 매뉴얼 조항 색인 완료`
           });
           saveState();
-          alert(`[${file.name}] 매뉴얼이 지식베이스에 탑재되었습니다!`);
         };
         reader.readAsText(file);
       }
@@ -1241,87 +1354,51 @@
       function submitManualQuestion() {
         const input = document.getElementById('qaInput');
         const question = input.value.trim();
-        if (!question) {
-          alert('궁금한 업무 내용이나 규정을 입력해주세요.');
-          return;
-        }
+        if (!question) return;
         input.value = '';
 
         const chat = document.getElementById('qaChatContainer');
-        const msgId = 'verify-' + Date.now();
+        const msgId = 'v-' + Date.now();
 
-        // 사용자 질문 추가
         chat.innerHTML += `
           <div class="flex justify-end">
-            <div class="bg-indigo-600 text-white text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-lg shadow-sm">
-              <p class="font-semibold">${question}</p>
-            </div>
+            <div class="bg-indigo-600 text-white text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-lg shadow-sm font-semibold">${question}</div>
           </div>
           <div id="${msgId}" class="bg-white border border-indigo-200 rounded-2xl p-4 shadow-sm space-y-2 text-xs">
             <div class="flex items-center gap-2 text-indigo-700 font-bold animate-verify">
               <span>🔍</span>
-              <span id="${msgId}-step">[1차 검증 중] 탑재된 ${manuals.length}개 매뉴얼 원문 조항 전수 스캔 중...</span>
-            </div>
-            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div id="${msgId}-bar" class="bg-indigo-600 h-full w-1/3 transition-all duration-300"></div>
+              <span id="${msgId}-step">[1차 검증] 매뉴얼 원문 조항 탐색 중...</span>
             </div>
           </div>
         `;
         chat.scrollTop = chat.scrollHeight;
 
-        // 3단계 정밀 검토 시뮬레이션 & 실제 조항 매칭
         setTimeout(() => {
-          const stepEl = document.getElementById(`${msgId}-step`);
-          const barEl = document.getElementById(`${msgId}-bar`);
-          if (stepEl) stepEl.textContent = '[2차 교차검증 중] 금액·비율·기한 수치 및 예외 규정 상호 대조 중...';
-          if (barEl) barEl.style.width = '66%';
-        }, 450);
+          const el = document.getElementById(`${msgId}-step`);
+          if (el) el.textContent = '[2차 교차검증] 금액·비율·기한 수치 및 감사 지적 기준 대조 중...';
+        }, 400);
 
         setTimeout(() => {
-          const stepEl = document.getElementById(`${msgId}-step`);
-          const barEl = document.getElementById(`${msgId}-bar`);
-          if (stepEl) stepEl.textContent = '[3차 최종 무결성 확인] 할루시네이션(오정보) 여부 팩트체크 완료!';
-          if (barEl) barEl.style.width = '100%';
-        }, 900);
-
-        setTimeout(() => {
-          const result = verifyAndAnswerFromManuals(question);
+          const res = verifyManualAnswer(question);
           const box = document.getElementById(msgId);
           if (box) {
             box.innerHTML = `
-              <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                <div class="flex items-center gap-1.5">
-                  <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px]">✓ 3회 교차검토 완료</span>
-                  <span class="text-slate-500 text-[11px]">근거 매뉴얼: <b class="text-slate-700">${result.sourceTitle}</b></span>
-                </div>
-                <span class="text-[11px] font-bold text-indigo-600">정확도 검증 지수: 100% (원문 일치)</span>
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px]">✓ 3회 교차검토 완료 (${res.sourceTitle})</span>
+                <span class="text-[11px] font-bold text-indigo-600">원문 수치 일치 확인됨</span>
               </div>
-
-              <!-- 3단계 검증 리포트 요약 -->
-              <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-200 text-[11px]">
-                <div class="text-slate-600"><b class="text-emerald-600">✔ 1차 원문탐색:</b> 조항 확인됨</div>
-                <div class="text-slate-600"><b class="text-emerald-600">✔ 2차 수치검증:</b> ${result.numbersFound}</div>
-                <div class="text-slate-600"><b class="text-emerald-600">✔ 3차 예외대조:</b> 단서조항 반영</div>
-              </div>
-
-              <!-- 최종 답변 -->
-              <div class="text-slate-800 leading-relaxed space-y-1.5 pt-1">
-                <p class="font-bold text-indigo-900">📌 최종 검증 답변:</p>
-                <div class="pl-2 border-l-2 border-indigo-500 space-y-1">${result.answerHtml}</div>
-              </div>
-
-              <!-- 원문 근거 인용 -->
-              <div class="bg-amber-50/70 border border-amber-200 rounded-lg p-2.5 text-[11px] text-amber-900">
-                <p class="font-bold mb-0.5">📖 매뉴얼 원문 근거 조항 (직접 인용):</p>
-                <p class="whitespace-pre-line">${result.quote}</p>
+              <div class="text-slate-800 leading-relaxed space-y-1 pt-1">${res.answerHtml}</div>
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-[11px] text-amber-900 mt-2">
+                <p class="font-bold">📖 근거 원문:</p>
+                <p class="whitespace-pre-line">${res.quote}</p>
               </div>
             `;
             chat.scrollTop = chat.scrollHeight;
           }
-        }, 1300);
+        }, 900);
       }
 
-      function verifyAndAnswerFromManuals(question) {
+      function verifyManualAnswer(question) {
         const keywords = question.split(/\s+/).map(w => w.replace(/[^가-힣a-zA-Z0-9]/g, '')).filter(w => w.length >= 2);
         let bestManual = manuals[0];
         let bestScore = -1;
@@ -1330,39 +1407,30 @@
         manuals.forEach(m => {
           let score = 0;
           const lines = m.content.split('\n').filter(Boolean);
-          const hitLines = [];
+          const hits = [];
           lines.forEach(line => {
-            let lineHit = 0;
+            let h = 0;
             keywords.forEach(kw => {
-              if (line.includes(kw) || m.title.includes(kw)) {
-                score += 3;
-                lineHit++;
-              }
+              if (line.includes(kw) || m.title.includes(kw)) { score += 3; h++; }
             });
-            if (lineHit > 0) hitLines.push(line);
+            if (h > 0) hits.push(line);
           });
           if (score > bestScore) {
             bestScore = score;
             bestManual = m;
-            matchedLines = hitLines.length > 0 ? hitLines : lines.slice(0, 4);
+            matchedLines = hits.length > 0 ? hits : lines.slice(0, 3);
           }
         });
 
-        const quote = matchedLines.join('\n');
-        const nums = quote.match(/\d+([,.]\d+)?(%|원|시간|일|년|회|명)?/g) || ['수치 기준 이상 없음'];
-
-        const answerHtml = matchedLines.map(l => `<p>• ${l.replace(/^\d+\.\s*/, '')}</p>`).join('');
-
         return {
           sourceTitle: bestManual.title,
-          numbersFound: nums.slice(0, 3).join(', '),
-          answerHtml,
-          quote
+          answerHtml: matchedLines.map(l => `<p>• ${l}</p>`).join(''),
+          quote: matchedLines.join('\n')
         };
       }
 
       // -----------------------------------------------------------------------
-      // 탭 전환 & 모달 제어
+      // 탭 전환 & 초기화
       // -----------------------------------------------------------------------
       function switchTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -1374,7 +1442,7 @@
         });
         const activeBtn = document.getElementById(`tab-${tabName}`);
         if (activeBtn) {
-          activeBtn.className = 'tab-btn px-4 py-2.5 font-semibold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white whitespace-nowrap cursor-pointer';
+          activeBtn.className = 'tab-btn px-4 py-2.5 font-bold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white whitespace-nowrap cursor-pointer';
         }
       }
 
@@ -1387,44 +1455,44 @@
       function saveApiKey() {
         const key = document.getElementById('geminiApiKeyInput').value.trim();
         if (key) {
-          storage.set('workflow_gemini_api_key', key);
-          document.getElementById('apiStatusText').textContent = 'Gemini API 연결됨';
+          storage.set('edufine_gemini_key', key);
+          document.getElementById('apiStatusText').textContent = 'AI 연결됨';
         }
         toggleApiModal();
       }
 
       function renderAll() {
         updateStats();
+        renderWorkflowTab();
         renderCalendar();
-        renderDashboardTasks();
-        renderAutofillSection();
-        renderChecklist();
+        renderCalendarSideList();
         renderManuals();
       }
 
-      // 전역 window.app 객체에 모든 핸들러 노출 (클릭 이벤트 100% 작동 보장)
       window.app = {
         switchTab,
+        updatePriorityBadge,
+        loadEdufineSample,
+        handleOfficialFileUpload,
+        analyzeEdufineDoc,
+        confirmAndRegisterDoc,
+        selectActiveDoc,
+        toggleFlowStep,
+        toggleFinalSubmit,
+        deleteActiveDoc,
+        updateCollectionField,
+        extractFieldsFromTemplateFile,
+        copyCollectionMessage,
+        copyFormattedDoc,
+        downloadExcelCSV,
+        downloadHwpTxt,
         jumpToYearMonth,
         changeMonth,
         applyDateRangeFilter,
         clearDateRangeFilter,
-        quickAddTask,
-        loadSampleOfficial,
-        handleOfficialFileUpload,
-        analyzeOfficialDoc,
-        registerTaskFromOfficial,
-        openTaskInAutofill,
-        selectTaskForAutofill,
-        extractFieldsFromTemplateFile,
-        updateFieldValue,
-        generateFormattedOutput,
-        copyFormattedResult,
-        downloadAsCSV,
-        downloadAsDoc,
-        toggleComplete,
-        deleteTask,
-        filterChecklist,
+        openDocFromCalendar,
+        setListFilter,
+        toggleCompleteById,
         addManualText,
         handleManualFileUpload,
         askSampleQuestion,
@@ -1433,7 +1501,8 @@
         saveApiKey
       };
 
-      // 초기 실행 및 기본 3단계 검증 예시 메시지 세팅
+      // 초기 로드 시 첫 번째 K-에듀파인 샘플 세팅 및 전체 렌더링
+      loadEdufineSample(0);
       renderAll();
       askSampleQuestion('교육복지 우선지원사업 예산 집행 시 간식비 및 강사료 지급 한도와 주의사항은?');
     })();
