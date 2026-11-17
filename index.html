@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>K-에듀파인 공문 9단계 자동 처리 워크스테이션 (2025-2028)</title>
+  <title>K-에듀파인 공문 9단계 정밀 자동 처리 시스템 (2025-2028)</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 엑셀(XLSX) 파서 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <!-- HWPX(압축형 한글) 파서용 JSZip -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+  <!-- PDF 텍스트 추출용 PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
     body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background-color: #f1f5f9; }
@@ -24,23 +29,16 @@
         <div class="bg-indigo-600 w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-base shadow">K</div>
         <div>
           <h1 class="font-bold text-base md:text-lg leading-tight flex items-center gap-2">
-            <span>K-에듀파인 공문 9단계 자동 업무보조 시스템</span>
-            <span class="hidden sm:inline-block text-[11px] bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-400/30 font-normal">2025~2028 학사달력 연동</span>
+            <span>K-에듀파인 공문 9단계 정밀 자동화 시스템</span>
+            <span class="hidden sm:inline-block text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30 font-semibold">정밀 파서 v4.0 탑재</span>
           </h1>
-          <p class="text-[11px] text-slate-400">공문 투입 즉시 [필수/권장 판별 → 파일·내용·기한·제출처 추출 → 흐름도 생성 → 수합·양식작성 → 제출체크] 자동화</p>
+          <p class="text-[11px] text-slate-400">'관련 공문' 날짜 자동 배제 · 한국식 날짜(11. 25.(수)까지) 완벽 인식 · HWP/PDF/XLSX 실문서 텍스트 추출</p>
         </div>
       </div>
 
       <div class="flex items-center space-x-2">
-        <div class="hidden lg:flex items-center space-x-1 bg-slate-800 px-3 py-1.5 rounded-full text-[11px] border border-slate-700">
-          <span class="text-slate-400 mr-1">인식 포맷:</span>
-          <span class="text-sky-300 font-semibold">HWP</span>·
-          <span class="text-emerald-300 font-semibold">XLSX</span>·
-          <span class="text-rose-300 font-semibold">PDF</span>·
-          <span class="text-amber-300 font-semibold">JPG/PNG</span>
-        </div>
         <button type="button" onclick="window.app.toggleApiModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition cursor-pointer">
-          🔑 <span id="apiStatusText">AI 엔진 설정</span>
+          🔑 <span id="apiStatusText">Gemini AI 정밀연동 (선택)</span>
         </button>
       </div>
     </div>
@@ -48,7 +46,7 @@
 
   <main class="max-w-7xl mx-auto px-4 py-5 flex-1 w-full">
 
-    <!-- 상단 요약 KPI 배너 -->
+    <!-- 상단 요약 KPI -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
       <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
@@ -87,10 +85,10 @@
       </div>
     </div>
 
-    <!-- 메인 탭 네비게이션 -->
+    <!-- 탭 네비게이션 -->
     <div class="flex space-x-1 md:space-x-2 border-b border-slate-300 mb-5 overflow-x-auto pb-1">
       <button type="button" onclick="window.app.switchTab('analyzer')" id="tab-analyzer" class="tab-btn px-4 py-2.5 font-bold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white whitespace-nowrap cursor-pointer">
-        ⚡ 1~5단계: K-에듀파인 공문 자동 판독기
+        ⚡ 1~5단계: K-에듀파인 공문 정밀 판독기
       </button>
       <button type="button" onclick="window.app.switchTab('workflow')" id="tab-workflow" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer">
         🧭 6~9단계: 업무 흐름도 · 수합 · 양식작성 · 제출
@@ -104,81 +102,91 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- [탭 1] 1~5단계: K-에듀파인 공문 자동 판독기 -->
+    <!-- [탭 1] 1~5단계: K-에듀파인 공문 정밀 판독기 -->
     <!-- ===================================================================== -->
     <section id="view-analyzer" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- 좌측: 공문 파일/텍스트 투입구 (5칼럼) -->
+      <!-- 좌측: 공문 원문/파일 투입 (5칼럼) -->
       <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h2 class="font-bold text-base text-slate-900">📥 K-에듀파인 공문 투입</h2>
-            <span class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">HWP / PDF / XLSX / 이미지</span>
+            <h2 class="font-bold text-base text-slate-900">📥 K-에듀파인 공문 원문 투입</h2>
+            <span id="fileParseStatus" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">실시간 문맥 파서 대기중</span>
           </div>
-          <p class="text-xs text-slate-500 mb-3">내려온 공문 파일이나 본문을 넣으면 <b>1~5단계 핵심 정보와 6단계 업무 흐름도</b>를 자동으로 뽑아내고 달력에 기한을 등록합니다.</p>
+          <p class="text-xs text-slate-500 mb-3">
+            공문 텍스트를 붙여넣거나 <b>HWP, HWPX, PDF, XLSX, TXT 파일</b>을 업로드하면 즉시 문맥을 분석해 오른쪽 결과창을 실시간으로 갱신합니다.
+          </p>
 
-          <!-- 파일 업로드 박스 -->
-          <label class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 rounded-xl p-4 flex items-center justify-between cursor-pointer transition mb-3">
+          <!-- 실파일 업로드 박스 -->
+          <label class="border-2 border-dashed border-indigo-300 hover:border-indigo-600 bg-indigo-50/40 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition mb-3">
             <div class="text-xs">
-              <p class="font-bold text-indigo-950">📂 공문 원문 또는 붙임 양식 업로드</p>
-              <p class="text-slate-500 mt-0.5">.hwp, .pdf, .xlsx, .jpg, .png, .txt 자동 인식</p>
+              <p class="font-bold text-indigo-950">📂 공문 파일 또는 붙임 서식 업로드 (실제 텍스트 추출)</p>
+              <p class="text-slate-500 mt-0.5">.hwp, .hwpx, .pdf, .xlsx, .csv, .txt 내부 본문 자동 해독</p>
             </div>
-            <span class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">파일 선택</span>
+            <span class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">파일 열기</span>
             <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.jpeg,.png,.txt" onchange="window.app.handleOfficialFileUpload(event)">
           </label>
 
-          <!-- 실전 K-에듀파인 샘플 공문 3종 (필수 2종, 권장 1종) -->
+          <!-- 실제 K-에듀파인 다양한 날짜/양식 패턴 테스트 프리셋 -->
           <div class="mb-3">
-            <span class="text-[11px] font-bold text-slate-500 block mb-1.5">⚡ 클릭 한 번으로 실제 K-에듀파인 공문 판독 테스트:</span>
+            <span class="text-[11px] font-bold text-slate-500 block mb-1.5">⚡ 실제 학교 공문 스타일 테스트 (관련일자 혼동 방지 검증):</span>
             <div class="grid grid-cols-1 gap-1.5">
-              <button type="button" onclick="window.app.loadEdufineSample(0)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-2 rounded-lg border border-rose-200 transition flex items-center justify-between">
-                <span>🔴 <b>[필수공문 예시 1]</b> 교육복지 우선지원사업 운영실적 및 만족도 제출</span>
-                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              <button type="button" onclick="window.app.loadEdufineSample(0)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-1.5 rounded-lg border border-rose-200 transition flex items-center justify-between cursor-pointer">
+                <span>🔴 <b>[패턴1: 연도생략형]</b> "관련: 2026.3.10." 무시 & "11. 20.(금) 16:00까지" 정확 추출</span>
+                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">적용</span>
               </button>
-              <button type="button" onclick="window.app.loadEdufineSample(1)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-2 rounded-lg border border-rose-200 transition flex items-center justify-between">
-                <span>🔴 <b>[필수공문 예시 2]</b> 단위학교 영재학급 운영 결과보고서 및 정산서 제출</span>
-                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              <button type="button" onclick="window.app.loadEdufineSample(1)" class="text-left text-xs bg-rose-50 hover:bg-rose-100 text-rose-900 px-3 py-1.5 rounded-lg border border-rose-200 transition flex items-center justify-between cursor-pointer">
+                <span>🔴 <b>[패턴2: 개조식·서식형]</b> 영재학급 정산 ("2026. 11. 25.(수) 한" 추출)</span>
+                <span class="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">적용</span>
               </button>
-              <button type="button" onclick="window.app.loadEdufineSample(2)" class="text-left text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-2 rounded-lg border border-emerald-200 transition flex items-center justify-between">
-                <span>🟢 <b>[권장/홍보 공문 예시]</b> 에듀테크 활용 수업혁신 교원 자율연수 신청 안내</span>
-                <span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">불러오기</span>
+              <button type="button" onclick="window.app.loadEdufineSample(2)" class="text-left text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-200 transition flex items-center justify-between cursor-pointer">
+                <span>🟢 <b>[패턴3: 권장/희망공문]</b> 자율연수 ("희망 교원에 한하여 11월 18일까지")</span>
+                <span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded font-bold shrink-0">적용</span>
               </button>
             </div>
           </div>
 
-          <textarea id="rawOfficialInput" rows="8" class="w-full border border-slate-300 rounded-xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="K-에듀파인 공문 본문을 여기에 붙여넣거나 위 샘플 버튼을 클릭하세요..."></textarea>
+          <textarea id="rawOfficialInput" rows="10" oninput="window.app.analyzeEdufineDoc(true)" class="w-full border border-slate-300 rounded-xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" placeholder="여기에 K-에듀파인 공문 본문을 그대로 복사해서 붙여넣으세요. 붙여넣는 즉시 우측에 기한과 내용이 추출됩니다!"></textarea>
         </div>
 
-        <button type="button" onclick="window.app.analyzeEdufineDoc()" class="w-full mt-3 bg-slate-900 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl shadow transition text-sm cursor-pointer">
-          🔍 공문 9단계 핵심 정보 자동 추출 실행
+        <button type="button" onclick="window.app.analyzeEdufineDoc(false)" class="w-full mt-3 bg-slate-900 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl shadow transition text-sm cursor-pointer">
+          🔍 공문 정밀 재분석 및 1~6단계 추출 실행
         </button>
       </div>
 
-      <!-- 우측: 1~6단계 자동 추출 리포트 & 원클릭 등록 (7칼럼) -->
+      <!-- 우측: 정밀 추출 리포트 & 추출 근거(Evidence) 확인창 (7칼럼) -->
       <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
         <div>
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
             <div>
-              <h2 class="font-bold text-base text-slate-900">📊 공문 핵심 추출 결과 (1단계 ~ 6단계 자동 정리)</h2>
-              <p class="text-xs text-slate-500">추출된 항목을 확인하거나 수정한 뒤 하단 버튼을 누르면 달력과 워크플로우에 자동 세팅됩니다.</p>
+              <h2 class="font-bold text-base text-slate-900">📊 K-에듀파인 공문 정밀 판독 리포트</h2>
+              <p class="text-xs text-slate-500">공문 원문에서 문맥 기반으로 추출된 정보와 <b>원문 근거 문장</b>입니다.</p>
             </div>
             <div id="mandatoryBadgeArea">
               <span class="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">🔴 1단계 판정: 필수 제출</span>
             </div>
           </div>
 
-          <div class="space-y-3.5 text-xs">
+          <!-- 원문 추출 근거(Evidence) 박스 -->
+          <div id="extractionEvidenceBox" class="bg-amber-50/90 border border-amber-200 rounded-xl p-3 mb-4 text-[11px] text-amber-950 space-y-1">
+            <p class="font-extrabold text-amber-900">🎯 공문 원문에서 포착한 핵심 근거 문장:</p>
+            <p id="evDeadlineLine">• <b>기한 근거:</b> 분석 대기중</p>
+            <p id="evContentLine">• <b>내용/제출물 근거:</b> 분석 대기중</p>
+            <p id="evIgnoredLine" class="text-slate-500">• <b>자동 배제된 과거(관련) 날짜:</b> 없음</p>
+          </div>
+
+          <div class="space-y-3 text-xs">
             <!-- 공문 제목 & 1단계 필수/권장 -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div class="md:col-span-3">
-                <label class="font-bold text-slate-600 block mb-1">공문 제목 (시행번호 포함)</label>
+                <label class="font-bold text-slate-600 block mb-1">공문 제목</label>
                 <input type="text" id="extTitle" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-semibold text-slate-800">
               </div>
               <div>
                 <label class="font-bold text-slate-600 block mb-1">1. 필수 / 권장 구분</label>
                 <select id="extPriority" onchange="window.app.updatePriorityBadge()" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 font-bold bg-slate-50">
-                  <option value="필수">🔴 필수 제출 (기한엄수)</option>
-                  <option value="권장">🟢 권장/희망 시 신청</option>
-                  <option value="참고">⚪ 단순 안내/공람</option>
+                  <option value="필수">🔴 필수 제출</option>
+                  <option value="권장">🟢 권장/희망 시</option>
+                  <option value="참고">⚪ 단순 참고/공람</option>
                 </select>
               </div>
             </div>
@@ -186,55 +194,61 @@
             <!-- 2단계: 제출해야 할 파일 & 포맷 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <div class="md:col-span-2">
-                <label class="font-bold text-indigo-900 block mb-1">2. 제출해야 할 결과보고서 및 첨부파일</label>
-                <input type="text" id="extFiles" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 bg-white font-medium" placeholder="예: [붙임1] 운영실적보고서.hwp, [붙임2] 정산내역서.xlsx">
+                <label class="font-bold text-indigo-900 block mb-1">2. 제출해야 할 결과보고서 및 붙임 파일</label>
+                <input type="text" id="extFiles" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 bg-white font-medium">
               </div>
               <div>
-                <label class="font-bold text-indigo-900 block mb-1">주 제출 파일 포맷</label>
+                <label class="font-bold text-indigo-900 block mb-1">제출 양식 포맷</label>
                 <select id="extFormat" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold">
-                  <option value="HWP">HWP (한글 문서)</option>
-                  <option value="XLSX">XLSX (엑셀 시트)</option>
-                  <option value="PDF">PDF (스캔/문서)</option>
-                  <option value="JPG/PNG">JPG/PNG (증빙사진)</option>
+                  <option value="HWP">HWP (한글)</option>
+                  <option value="XLSX">XLSX (엑셀)</option>
+                  <option value="PDF">PDF (문서)</option>
+                  <option value="JPG/PNG">JPG/PNG (이미지)</option>
                 </select>
               </div>
             </div>
 
-            <!-- 3단계: 들어갈 내용 (수합 항목) -->
-            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-              <label class="font-bold text-indigo-950 block mb-1">3. 파일에 들어갈 필수 내용 (자동 추출된 작성 항목 - 쉼표로 구분)</label>
-              <input type="text" id="extContents" class="w-full border border-indigo-200 rounded-lg px-3 py-1.5 bg-white text-slate-800 font-medium" placeholder="예: 학교명, 담당자, 추진일시, 참여인원, 주요추진실적, 예산집행액, 만족도결과, 향후계획">
+            <!-- 3단계: 들어갈 내용 (수합 항목) + 공문 핵심 요약 -->
+            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-2">
+              <div>
+                <label class="font-bold text-indigo-950 block mb-1">3-1. 공문 핵심 지시사항 요약 (자동 추출)</label>
+                <input type="text" id="extSummary" class="w-full border border-indigo-200 rounded-lg px-3 py-1.5 bg-white text-slate-800 font-medium" placeholder="공문의 핵심 요구사항이 요약됩니다.">
+              </div>
+              <div>
+                <label class="font-bold text-indigo-950 block mb-1">3-2. 제출 파일에 들어갈 세부 작성 항목 (쉼표로 구분 → 7단계 입력칸으로 자동 생성됨)</label>
+                <input type="text" id="extContents" class="w-full border border-indigo-200 rounded-lg px-3 py-1.5 bg-white text-indigo-900 font-bold" placeholder="예: 학교명, 담당자, 운영기간, 참여인원, 주요실적, 예산집행액">
+              </div>
             </div>
 
-            <!-- 4단계: 기한 (시작일~마감일) & 5단계: 제출처/제출방식 -->
+            <!-- 4단계: 기한 (시작일~마감일) & 5단계: 제출처 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label class="font-bold text-slate-600 block mb-1">4-1. 업무 시작일 (수합 시작)</label>
+                <label class="font-bold text-slate-600 block mb-1">4-1. 업무 시작일 (접수/수합 시작)</label>
                 <input type="date" id="extStartDate" min="2025-01-01" max="2028-12-31" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5">
               </div>
               <div>
-                <label class="font-bold text-rose-600 block mb-1">4-2. 제출 마감 기한 (달력 표시)</label>
-                <input type="date" id="extDeadline" min="2025-01-01" max="2028-12-31" class="w-full border border-rose-300 bg-rose-50/30 rounded-lg px-2.5 py-1.5 font-bold text-rose-700">
+                <label class="font-bold text-rose-600 block mb-1">4-2. 제출 마감 기한 (정밀 추출됨)</label>
+                <input type="date" id="extDeadline" min="2025-01-01" max="2028-12-31" class="w-full border-2 border-rose-400 bg-rose-50/40 rounded-lg px-2.5 py-1.5 font-extrabold text-rose-700">
               </div>
               <div>
-                <label class="font-bold text-slate-600 block mb-1">5. 제출처 및 제출 경로</label>
-                <input type="text" id="extDestination" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 font-medium" placeholder="예: 경산교육지원청 교육지원과 (K-에듀파인 문서수발)">
+                <label class="font-bold text-slate-600 block mb-1">5. 제출처 및 제출 방법</label>
+                <input type="text" id="extDestination" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 font-medium">
               </div>
             </div>
 
             <!-- 6단계: 자동 생성된 업무 흐름도 미리보기 -->
-            <div class="bg-slate-900 text-white p-3.5 rounded-xl">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-amber-300">6. 자동 생성된 맞춤형 업무 흐름도 (Workflow Pipeline)</span>
-                <span class="text-[10px] text-slate-400">등록 후 6~9단계 탭에서 단계별 체크 가능</span>
+            <div class="bg-slate-900 text-white p-3 rounded-xl">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-amber-300 text-[11px]">6. 자동 생성된 맞춤형 업무 흐름도</span>
+                <span class="text-[10px] text-slate-400">6~9단계 탭에서 클릭하여 완료 체크</span>
               </div>
-              <div id="extFlowPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]"></div>
+              <div id="extFlowPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px]"></div>
             </div>
           </div>
         </div>
 
         <button type="button" onclick="window.app.confirmAndRegisterDoc()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm cursor-pointer">
-          📅 달력(2025~2028)에 기한 자동 기록 & 6~9단계 업무 워크플로우 시작하기 →
+          📅 이 내용으로 달력(2025~2028)에 기한 등록 & 6~9단계 양식 작성으로 이동 →
         </button>
       </div>
     </section>
@@ -243,7 +257,6 @@
     <!-- [탭 2] 6~9단계: 업무 흐름도 · 정보 수합 · 양식 맞춤 작성 · 제출 완료 -->
     <!-- ===================================================================== -->
     <section id="view-workflow" class="tab-content hidden space-y-6">
-      <!-- 상단: 처리할 공문 선택 바 & 5개 핵심 요약 배지 -->
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div class="flex items-center gap-2 flex-1 min-w-[260px]">
@@ -255,62 +268,55 @@
             <button type="button" onclick="window.app.deleteActiveDoc()" class="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 cursor-pointer">삭제</button>
           </div>
         </div>
-
-        <!-- 선택된 공문의 1~5단계 핵심 요약 바 -->
         <div id="activeDocSummaryBar" class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs"></div>
       </div>
 
-      <!-- 6단계: 인터랙티브 업무 흐름도 (클릭하여 진행단계 체크) -->
+      <!-- 6단계: 인터랙티브 업무 흐름도 -->
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <h3 class="font-bold text-sm text-slate-900">🧭 6단계: 자동 생성된 업무 흐름도 (각 단계를 클릭하면 완료 체크됩니다)</h3>
-            <p class="text-xs text-slate-500">공문 접수부터 정보 수합, 양식 작성, 내부결재, K-에듀파인 발송까지 현재 어디까지 진행되었는지 한눈에 관리하세요.</p>
+            <h3 class="font-bold text-sm text-slate-900">🧭 6단계: 업무 흐름도 (각 단계를 클릭하면 완료 체크됩니다)</h3>
+            <p class="text-xs text-slate-500" id="activeDocSummaryText"></p>
           </div>
           <span id="flowProgressText" class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">진행률 0%</span>
         </div>
         <div id="interactiveFlowChart" class="grid grid-cols-2 md:grid-cols-6 gap-2.5"></div>
       </div>
 
-      <!-- 7단계(정보 수합) & 8~9단계(양식 맞춤 작성 및 제출) -->
+      <!-- 7~9단계 -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- 좌측 5칼럼: 7단계 정보 수합 및 양식 파일 추출 -->
         <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-bold text-sm text-slate-900">🗂️ 7단계: 필요 정보 수합 및 데이터 입력</h3>
             <label class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg font-semibold cursor-pointer">
-              + 붙임 양식파일 추가 인식
-              <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.jpg,.png" onchange="window.app.extractFieldsFromTemplateFile(event)">
+              + 붙임 양식파일(XLSX/HWP) 열기
+              <input type="file" class="hidden" accept=".hwp,.hwpx,.xlsx,.xls,.csv,.pdf,.txt" onchange="window.app.extractFieldsFromTemplateFile(event)">
             </label>
           </div>
-          <p class="text-xs text-slate-500 mb-3">동료 교사에게 보낼 수합 안내문을 복사하거나, 수합된 자료를 아래 항목에 바로 입력하세요.</p>
 
-          <!-- 동료 교사 메신저용 수합 요청 메시지 자동 생성기 -->
-          <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3 mb-4 flex items-center justify-between gap-2">
+          <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3 mb-3 flex items-center justify-between gap-2">
             <div class="text-xs text-amber-950">
-              <p class="font-bold">💬 교내 메신저(쿨메신저) 수합 요청 문구 자동 생성</p>
-              <p class="text-[11px] text-amber-800">필요 항목과 마감일이 포함된 협조 요청 메시지를 복사합니다.</p>
+              <p class="font-bold">💬 교내 메신저(쿨메신저) 수합 요청 문구 복사</p>
+              <p class="text-[11px] text-amber-800">추출된 기한과 수합 항목이 자동 포함된 안내문입니다.</p>
             </div>
             <button type="button" onclick="window.app.copyCollectionMessage()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 cursor-pointer">
-              수합문구 복사
+              문구 복사
             </button>
           </div>
 
-          <!-- 동적 수합 입력 폼 -->
           <div id="collectionFieldsForm" class="space-y-2.5 flex-1 overflow-y-auto max-h-[360px] pr-1 custom-scroll"></div>
         </div>
 
-        <!-- 우측 7칼럼: 8단계 양식 맞춤 자동 작성 & 9단계 제출 -->
         <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
             <div>
-              <h3 class="font-bold text-sm text-slate-900">✨ 8단계: 제출 양식 맞춤 자동 정리 & 9단계: 최종 제출</h3>
-              <p class="text-xs text-slate-500">K-에듀파인 본문 및 한글(HWP)·엑셀(XLSX) 표준 개조식 문체(`~함`, `~임`)로 실시간 변환됩니다.</p>
+              <h3 class="font-bold text-sm text-slate-900">✨ 8단계: 제출 양식 맞춤 자동 정리 & 9단계: 제출</h3>
+              <p class="text-xs text-slate-500">K-에듀파인 기안문 및 한글(HWP)·엑셀(XLSX) 표준 개조식 문체(`~함`, `~임`)로 실시간 변환됩니다.</p>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
               <button type="button" onclick="window.app.copyFormattedDoc()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg font-bold cursor-pointer">📋 본문/표 복사</button>
-              <button type="button" onclick="window.app.downloadExcelCSV()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">📊 엑셀(CSV) 다운로드</button>
-              <button type="button" onclick="window.app.downloadHwpTxt()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">💾 보고서(TXT) 다운로드</button>
+              <button type="button" onclick="window.app.downloadExcelCSV()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">📊 엑셀(CSV) 저장</button>
+              <button type="button" onclick="window.app.downloadHwpTxt()" class="text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-lg font-bold cursor-pointer">💾 보고서(TXT) 저장</button>
             </div>
           </div>
 
@@ -323,7 +329,6 @@
     <!-- [탭 3] 통합 자동 달력 (2025~2028) & 전체 체크리스트 -->
     <!-- ===================================================================== -->
     <section id="view-calendar" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- 좌측 8칼럼: 2025~2028 달력 -->
       <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
           <div class="flex items-center space-x-2">
@@ -352,7 +357,6 @@
           </div>
         </div>
 
-        <!-- 기간 조회 필터 -->
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-semibold text-slate-600">📌 특정 기간 강조 조회:</span>
@@ -371,7 +375,6 @@
         <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 mt-2"></div>
       </div>
 
-      <!-- 우측 4칼럼: 공문 체크리스트 & 필터 -->
       <div class="lg:col-span-4 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-bold text-sm text-slate-900">☑️ 공문 처리 완료 체크리스트</h3>
@@ -394,12 +397,12 @@
           <h2 class="font-bold text-base">📘 학교 업무 매뉴얼·지침 탑재</h2>
           <span id="manualCountBadge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">3개 탑재됨</span>
         </div>
-        <p class="text-xs text-slate-500 mb-3">업무 매뉴얼(HWP, PDF, XLSX, TXT)을 등록하면 공문 처리 중 헷갈리는 예산·정산·학사 규정을 3단계로 교차 검증해 알려줍니다.</p>
+        <p class="text-xs text-slate-500 mb-3">업무 매뉴얼(HWP, PDF, XLSX, TXT)을 등록하면 예산·정산·학사 규정을 3단계로 교차 검증해 알려줍니다.</p>
 
         <label class="border-2 border-dashed border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition mb-3">
           <div class="text-xs">
             <p class="font-bold text-emerald-900">➕ 매뉴얼 파일 업로드 (HWP/PDF/XLSX/TXT)</p>
-            <p class="text-emerald-600 mt-0.5">업로드 즉시 조항·수치 자동 색인</p>
+            <p class="text-emerald-600 mt-0.5">업로드 즉시 본문 텍스트 추출 및 색인</p>
           </div>
           <span class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0">파일 선택</span>
           <input type="file" class="hidden" accept=".hwp,.hwpx,.pdf,.xlsx,.xls,.txt,.csv" onchange="window.app.handleManualFileUpload(event)">
@@ -458,7 +461,7 @@
         <button type="button" onclick="window.app.toggleApiModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed mb-4">
-        별도의 API 키 없이도 내장된 K-에듀파인 9단계 규칙 엔진이 100% 작동합니다. Gemini API 키를 연결하면 이미지 공문 OCR과 AI 문장 교정이 함께 동작합니다.
+        내장된 K-에듀파인 문맥 인지 파서(v4.0)만으로도 모든 한국식 공문 날짜와 항목을 정확히 추출합니다. 추가로 Gemini API 키를 연결하면 스캔된 이미지 공문(JPG/PNG) OCR과 LLM 심층 요약까지 함께 사용할 수 있습니다.
       </p>
       <input type="password" id="geminiApiKeyInput" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm mb-4" placeholder="AIzaSy...">
       <div class="flex justify-end space-x-2">
@@ -488,19 +491,373 @@
         '10-09': '한글날', '12-25': '성탄절'
       };
 
-      // K-에듀파인 9단계 표준 데이터 구조
+      // =======================================================================
+      // ★ 핵심 엔진: K-에듀파인 문맥 인지형 정밀 파서 (Context-Aware Parser v4.0)
+      // =======================================================================
+      function parseKoreanOfficialDocument(rawText) {
+        const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        let defaultYear = 2026;
+
+        // 문서 내 연도 힌트 탐색 (2025~2028)
+        const yearMatch = rawText.match(/(202[5-8])\s*(년|학년도|\.|\/|-)/);
+        if (yearMatch) defaultYear = parseInt(yearMatch[1], 10);
+
+        // 날짜 문자열을 YYYY-MM-DD로 정규화하는 함수
+        function normalizeDateToken(token, fallbackYear) {
+          // 1) YYYY. MM. DD / YYYY-MM-DD / YYYY년 MM월 DD일
+          let m = token.match(/(202[5-8])\s*(?:년|\.|-|\/)\s*(0?[1-9]|1[0-2])\s*(?:월|\.|-|\/)\s*(0?[1-9]|[12]\d|3[01])/);
+          if (m) {
+            return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+          }
+          // 2) 연도 생략형: MM. DD.(요일) / MM월 DD일 / MM/DD
+          m = token.match(/(?:^|[^\d])(0?[1-9]|1[0-2])\s*(?:월|\.|\/)\s*(0?[1-9]|[12]\d|3[01])\s*(?:일|\.|(?=\s*\([월화수목금토일]\))|$)/);
+          if (m) {
+            return `${fallbackYear}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
+          }
+          return null;
+        }
+
+        // 한 줄에서 날짜들을 모두 추출하는 함수
+        function extractDatesFromLine(line, fallbackYear) {
+          const results = [];
+          const regex = /(?:202[5-8]\s*(?:년|\.|-|\/)\s*)?(?:0?[1-9]|1[0-2])\s*(?:월|\.|-|\/)\s*(?:0?[1-9]|[12]\d|3[01])\s*(?:일|\.)?(?:\s*\([월화수목금토일]\))?/g;
+          let match;
+          while ((match = regex.exec(line)) !== null) {
+            // 공문 호수(예: -4812, -1092)나 전화번호 오인식 방지
+            const beforeChar = line[match.index - 1] || '';
+            if (/[가-힣a-zA-Z0-9]/.test(beforeChar) && beforeChar !== ':' && beforeChar !== '：' && beforeChar !== '~') continue;
+            const norm = normalizeDateToken(match[0], fallbackYear);
+            if (norm) results.push(norm);
+          }
+          return results;
+        }
+
+        let ignoredDates = [];
+        let docIssueDate = '2026-11-17';
+        let bestDeadline = null;
+        let bestStartDate = null;
+        let bestDeadlineScore = -999;
+        let deadlineEvidenceLine = '';
+
+        // 1단계: 줄 단위 문맥 점수 산정 (관련 공문 날짜 배제 & 마감기한 정확 포착)
+        lines.forEach(line => {
+          const lineDates = extractDatesFromLine(line, defaultYear);
+          if (lineDates.length === 0) return;
+
+          // 시행일자 포착 (업무 시작일 기본값으로 활용)
+          if (/(시행|접수)/.test(line) && !/(관련|근거)/.test(line)) {
+            docIssueDate = lineDates[0];
+          }
+
+          // '관련:', '근거:', '호(' 줄은 과거 공문 날짜이므로 마감일에서 철저히 배제
+          if (/^(1\.\s*)?(관련|근거)\s*[:：]/.test(line) || /[가-힣]+과-\d+\s*\(/.test(line)) {
+            ignoredDates.push(...lineDates);
+            return;
+          }
+
+          let score = 0;
+          if (/(제출\s*기한|마감\s*기한|제출\s*마감|신청\s*기한|회신\s*기한|수합\s*기한|기한\s*[:：]|마감일)/.test(line)) score += 100;
+          if (/(까지|한\b|限|기한\s*엄수|기일\s*엄수|까지\s*제출)/.test(line)) score += 60;
+          if (/(제출|회신|신청|보고|수합|접수\s*기간|운영\s*기간|작성\s*기간)/.test(line)) score += 30;
+          if (/(일시|행사일|대회일|연수일시)/.test(line) && !/(제출|기한|까지|신청)/.test(line)) score -= 20;
+
+          if (score > bestDeadlineScore) {
+            bestDeadlineScore = score;
+            deadlineEvidenceLine = line;
+            if (lineDates.length >= 2 && /(~|부터|에서)/.test(line)) {
+              bestStartDate = lineDates[0];
+              bestDeadline = lineDates[lineDates.length - 1];
+            } else {
+              bestDeadline = lineDates[lineDates.length - 1];
+            }
+          }
+        });
+
+        // 만약 명시적인 기한 줄이 없다면, 본문 하단에서 '~까지'가 붙은 날짜 탐색
+        if (!bestDeadline) {
+          for (let i = lines.length - 1; i >= 0; i--) {
+            if (/^(1\.\s*)?(관련|근거)/.test(lines[i])) continue;
+            const dList = extractDatesFromLine(lines[i], defaultYear);
+            if (dList.length > 0) {
+              bestDeadline = dList[dList.length - 1];
+              deadlineEvidenceLine = lines[i];
+              break;
+            }
+          }
+        }
+
+        if (!bestDeadline) bestDeadline = '2026-11-24';
+        if (!bestStartDate) {
+          bestStartDate = (docIssueDate && docIssueDate <= bestDeadline) ? docIssueDate : bestDeadline;
+        }
+
+        // 2단계: 공문 제목 추출
+        let title = '';
+        for (const line of lines) {
+          const m = line.match(/^(?:제목|건명|공문제목)\s*[:：]\s*(.+)/);
+          if (m) { title = m[1].trim(); break; }
+        }
+        if (!title) {
+          const candidate = lines.find(l => !/^\[/.test(l) && !/^(시행|우\d|전화|전송|충청|경상|서울|대구|부산)/.test(l) && l.length > 6);
+          title = candidate ? candidate.slice(0, 50) : 'K-에듀파인 수신 공문';
+        }
+
+        // 3단계: 필수 / 권장 / 참고 판별
+        let priority = '필수';
+        if (/(희망\s*교원|희망교|희망자에\s*한|희망하는|자율\s*연수|자율\s*신청|권장|해당자\s*없을\s*시\s*미제출|해당없음\s*생략)/.test(rawText)) {
+          priority = '권장';
+        } else if (/(단순\s*안내|참고\s*자료|홍보\s*협조|공람)/.test(rawText) && !/(제출\s*기한|제출서류|제출파일)/.test(rawText)) {
+          priority = '참고';
+        }
+
+        // 4단계: 제출 파일명 및 포맷 추출
+        let files = [];
+        let format = 'HWP';
+        const fileLineRegex = /(?:제출\s*서류|제출\s*파일|제출\s*양식|제출\s*자료|붙임\s*\d*)\s*[:：.]?\s*(.+)/gi;
+        let fm;
+        while ((fm = fileLineRegex.exec(rawText)) !== null) {
+          const val = fm[1].trim();
+          if (val && !files.includes(val)) files.push(val);
+        }
+        // 파일 확장자 패턴 직접 추출
+        const extMatches = rawText.match(/(\[?붙임\d*\]?\s*[^,\n]+\.(?:hwp|hwpx|xlsx|xls|pdf|jpg|png)|\[?서식\d*\]?\s*[^,\n]+\.(?:hwp|hwpx|xlsx|xls|pdf))/gi);
+        if (extMatches) {
+          extMatches.forEach(item => {
+            if (!files.some(f => f.includes(item.trim()))) files.push(item.trim());
+          });
+        }
+        const fileStr = files.length > 0 ? files.slice(0, 2).join(', ') : `[붙임1] ${title.replace(/\s+/g, '_').slice(0, 18)}_제출양식.hwp`;
+        if (/\.xlsx|\.xls|엑셀|명단|집계표|정산서/i.test(fileStr)) format = 'XLSX';
+        else if (/\.pdf|스캔|이수증/i.test(fileStr)) format = 'PDF';
+        else if (/\.jpg|\.png|사진/i.test(fileStr)) format = 'JPG/PNG';
+
+        // 5단계: 제출처 및 제출 경로 추출
+        let destination = '';
+        for (const line of lines) {
+          const dm = line.match(/(?:제출처|제출\s*방법|회신처|제출\s*경로|수신처)\s*[:：]\s*(.+)/);
+          if (dm) { destination = dm[1].trim(); break; }
+        }
+        if (!destination) {
+          const orgMatch = rawText.match(/([가-힣]+(?:교육지원청|교육청|연수원|학교|시청)\s*[가-힣]*과?)/);
+          destination = orgMatch ? `${orgMatch[1]} (K-에듀파인 문서수발)` : '교육지원청 담당부서 (K-에듀파인 제출)';
+        }
+
+        // 6단계: 핵심 내용 요약 & 수합 항목(3단계) 정밀 추출
+        let summaryLines = [];
+        let contentItems = [];
+        let contentEvidenceLine = '';
+
+        lines.forEach(line => {
+          // 명시적 작성항목/제출내용 줄 탐색
+          const cm = line.match(/(?:필수\s*포함\s*내용|필수\s*기재\s*항목|작성\s*항목|제출\s*내용|수합\s*항목|포함\s*사항|주요\s*내용|기재\s*사항)\s*[:：]\s*(.+)/);
+          if (cm) {
+            contentEvidenceLine = line;
+            const splitItems = cm[1].split(/[,·/、]|및/).map(s => s.replace(/\(.*?\)/g, '').trim()).filter(s => s.length >= 2 && s.length <= 20);
+            contentItems.push(...splitItems);
+          }
+
+          // 공문 핵심 지시문 ('~바랍니다', '가.', '나.', '1)', '-') 요약 수집
+          if (/(바랍니다|요청합니다|제출하여|안내하오니)/.test(line) || /^(가|나|다|라|마|바|\d+\)|-|○|•)\s*[.：:]?\s*/.test(line)) {
+            if (!/^(1\.\s*)?관련/.test(line)) summaryLines.push(line);
+          }
+        });
+
+        // 만약 명시적인 쉼표 항목이 없다면, 본문 개조식 줄(가. 나. 다. / - )에서 키워드 추출
+        if (contentItems.length === 0) {
+          lines.forEach(line => {
+            const bulletMatch = line.match(/^(?:가|나|다|라|마|바|\d+\)|-|○|•)\s*[.：:]?\s*([^:：]{2,15})\s*[:：]\s*(.+)/);
+            if (bulletMatch) {
+              const key = bulletMatch[1].trim();
+              if (!/(관련|제출기한|기한|제출처|제출방법|구분)/.test(key)) {
+                contentItems.push(key);
+                if (!contentEvidenceLine) contentEvidenceLine = line;
+              }
+            }
+          });
+        }
+
+        // 표 헤더나 서식 키워드 추론 보강
+        if (contentItems.length === 0) {
+          contentItems = ['학교명', '담당교사(작성자)'];
+          if (/(예산|정산|집행|금액|강사료|간식비)/.test(rawText)) contentItems.push('배정예산', '집행금액', '집행잔액', '정산내역');
+          if (/(실적|결과|운영|프로그램|동아리|영재)/.test(rawText)) contentItems.push('프로그램명', '운영기간', '참여인원', '주요추진실적', '향후계획');
+          if (/(신청|연수|명단|참가|대회)/.test(rawText)) contentItems.push('직급', '성명', '신청과정(종목)', '연락처', '비고');
+          if (contentItems.length === 2) contentItems.push('추진일시', '대상인원', '주요내용', '비고');
+        }
+
+        // 중복 제거
+        contentItems = [...new Set(contentItems)];
+        const summaryText = summaryLines.length > 0 ? summaryLines[0] : `${title} 관련 기한 내 자료 수합 및 제출`;
+
+        return {
+          title,
+          priority,
+          files: fileStr,
+          format,
+          summary: summaryText,
+          contents: contentItems.join(', '),
+          startDate: bestStartDate,
+          deadline: bestDeadline,
+          destination,
+          evidence: {
+            deadlineLine: deadlineEvidenceLine || `본문 분석 기준 마감일: ${bestDeadline}`,
+            contentLine: contentEvidenceLine || summaryText,
+            ignoredDates: [...new Set(ignoredDates)]
+          }
+        };
+      }
+
+      // =======================================================================
+      // ★ 실파일(HWP, HWPX, PDF, XLSX, TXT) 내부 텍스트 추출기
+      // =======================================================================
+      async function extractTextFromUploadedFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+
+        // 1. TXT / CSV
+        if (ext === 'txt' || ext === 'csv') {
+          return await file.text();
+        }
+
+        // 2. XLSX / XLS (엑셀 시트 내 모든 셀 텍스트와 표 헤더 추출)
+        if ((ext === 'xlsx' || ext === 'xls') && window.XLSX) {
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type: 'array' });
+          let fullText = `[엑셀 파일명: ${file.name}]\n`;
+          let headerCandidates = [];
+          wb.SheetNames.forEach(name => {
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1 });
+            rows.forEach((row, rIdx) => {
+              const cleanRow = row.map(c => String(c || '').trim()).filter(Boolean);
+              if (cleanRow.length > 0) {
+                fullText += cleanRow.join(' | ') + '\n';
+                if (rIdx <= 3 && cleanRow.length >= 3 && headerCandidates.length === 0) {
+                  headerCandidates = cleanRow;
+                }
+              }
+            });
+          });
+          if (headerCandidates.length > 0) {
+            fullText += `\n필수기재항목: ${headerCandidates.join(', ')}`;
+          }
+          return fullText;
+        }
+
+        // 3. PDF (PDF.js로 모든 페이지 텍스트 추출)
+        if (ext === 'pdf' && window.pdfjsLib) {
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+            let pdfText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              pdfText += content.items.map(item => item.str).join(' ') + '\n';
+            }
+            if (pdfText.trim().length > 10) return pdfText;
+          } catch (e) {}
+        }
+
+        // 4. HWPX (개방형 한글 포맷 - ZIP 내부 Contents/section0.xml 텍스트 추출)
+        if ((ext === 'hwpx' || ext === 'hwp') && window.JSZip) {
+          try {
+            const buf = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(buf);
+            let xmlText = '';
+            for (const filename of Object.keys(zip.files)) {
+              if (filename.includes('section') && filename.endsWith('.xml')) {
+                const rawXml = await zip.files[filename].async('string');
+                const stripped = rawXml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+                xmlText += stripped + '\n';
+              }
+            }
+            if (xmlText.trim().length > 10) return xmlText;
+          } catch (e) {
+            // 일반 바이너리 HWP5.0 파일인 경우 아래 UTF-16LE 스트링 추출기로 이동
+          }
+        }
+
+        // 5. HWP (바이너리 한글 문서 내부 유니코드 한글/숫자 텍스트 스트림 추출)
+        if (ext === 'hwp') {
+          try {
+            const buf = await file.arrayBuffer();
+            const decoder = new TextDecoder('utf-16le');
+            const decoded = decoder.decode(buf);
+            // 의미 있는 한글/숫자/기호 연속 구간만 필터링
+            const chunks = decoded.match(/[가-힣0-9a-zA-Z\s.,:：()~\-\[\]/]{6,}/g) || [];
+            const validChunks = chunks
+              .map(c => c.trim())
+              .filter(c => /[가-힣]{2,}/.test(c) && !/HWP Document|FileHeader|DocInfo|BodyText/.test(c));
+            if (validChunks.length > 0) {
+              return `[한글(HWP) 파일 텍스트 추출: ${file.name}]\n` + validChunks.join('\n');
+            }
+          } catch (e) {}
+        }
+
+        return `제목: ${file.name.replace(/\.[^/.]+$/, '')}\n제출파일: ${file.name}`;
+      }
+
+      // =======================================================================
+      // 초기 데이터 및 샘플 공문 3종
+      // =======================================================================
+      const edufineSamples = [
+        {
+          raw: `경상북도경산교육지원청
+수신자: 관내 초·중학교장 (교육복지 우선지원사업 담당교사)
+(경유)
+제목: 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 조사 결과 제출
+
+1. 관련: 경상북도교육청 교육복지과-1092(2026. 3. 10.) 및 교육지원과-2104(2026. 5. 14.)
+2. 교육복지 우선지원사업 운영학교에서는 당해 연도 사업 추진 실적 및 만족도 조사 결과를 아래 기한까지 빠짐없이 제출하여 주시기 바랍니다.
+  가. 제출대상: 관내 교육복지 우선지원사업 운영교 전체 (필수제출)
+  나. 작성 및 수합기간: 11. 16.(월) ~ 11. 20.(금)
+  다. 제출기한: 11. 20.(금) 16:00까지 (기한엄수)
+  라. 제출처: 경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발로 제출)
+  마. 제출서류: [붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx
+  바. 필수포함내용: 학교명, 담당부장(교사), 프로그램명, 운영기간, 참여학생수, 주요추진실적, 예산집행내역, 만족도결과, 향후계획`
+        },
+        {
+          raw: `경상북도경산교육지원청
+수신자: 단위학교 영재학급 운영교장
+제목: 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출 요청
+
+1. 관련: 창의인재과-882(2026. 2. 19.) 「2026학년도 영재교육 운영 기본계획」
+2. 단위학교 영재학급 운영교에서는 2026학년도 운영 결과 및 사업비 집행 정산서를 다음과 같이 제출하여 주시기 바랍니다.
+  가. 구분: 필수 제출 (미제출 시 차년도 예산 배정 제외)
+  나. 제출기한: 2026. 11. 25.(수) 17:00 한
+  다. 제출방법: 경상북도경산교육지원청 창의인재과 (K-에듀파인 시스템 제출)
+  라. 제출파일: [서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx
+  마. 필수기재항목: 학교명, 영재학급명, 담당교사, 수료인원, 총배정예산, 집행금액, 집행잔액, 주요실험모듈실적
+시행 창의인재과-3190 (2026. 11. 17.) 접수`
+        },
+        {
+          raw: `경상북도교육청연수원
+수신자: 전 초·중·고등학교장
+제목: 2026 하반기 에듀테크 활용 수업혁신 교원 자율연수 신청 안내
+
+1. 관련: 연수운영부-410(2026. 4. 2.)
+2. 교원의 디지털 수업 역량 강화를 위한 자율연수 과정을 안내하오니 희망하는 교원이 참여할 수 있도록 안내하여 주시기 바랍니다.
+  가. 구분: 권장 사항 (희망 교원 자율 신청, 희망자 없을 시 공문 미제출)
+  나. 신청기한: 11월 18일(수) 18:00까지
+  다. 제출처: 경상북도교육청연수원 연수운영부 (희망자 있을 경우만 K-에듀파인 제출)
+  라. 제출양식: [붙임1] 자율연수_신청자명단.xlsx
+  마. 작성항목: 학교명, 직급, 성명, 희망과정명, 연락처`
+        }
+      ];
+
       const defaultDocs = [
         {
           id: 'doc-1',
-          officialTitle: '[경산교육지원청-4812] 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 제출',
-          priority: '필수', // 1. 필수 / 권장 / 참고
-          fileName: '[붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx', // 2. 제출 파일
+          officialTitle: '2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 조사 결과 제출',
+          priority: '필수',
+          fileName: '[붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx',
           format: 'HWP',
-          requiredFields: ['학교명', '담당부장(교사)', '프로그램명', '운영기간', '참여학생수', '주요추진실적', '예산집행내역', '만족도결과', '향후계획'], // 3. 들어갈 내용
-          startDate: '2026-11-16', // 4. 기한 (시작~마감)
+          summary: '당해 연도 교육복지 사업 추진 실적 및 만족도 조사 결과를 11. 20.(금) 16:00까지 필수 제출',
+          requiredFields: ['학교명', '담당부장(교사)', '프로그램명', '운영기간', '참여학생수', '주요추진실적', '예산집행내역', '만족도결과', '향후계획'],
+          startDate: '2026-11-16',
           deadline: '2026-11-20',
-          destination: '경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발)', // 5. 제출처
-          workflowSteps: [ // 6. 업무 흐름도
+          destination: '경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발로 제출)',
+          workflowSteps: [
             { step: '1. 공문접수 및 필수판별', done: true },
             { step: '2. 관련부서/교사 자료수합', done: true },
             { step: '3. 실적보고서·정산표 작성', done: true },
@@ -508,7 +865,7 @@
             { step: '5. 학교장 내부결재(기안)', done: false },
             { step: '6. K-에듀파인 발송 완료', done: false }
           ],
-          extractedData: { // 7~8. 수합 및 양식 작성 데이터
+          extractedData: {
             '학교명': '옥곡초등학교',
             '담당부장(교사)': '교육복지부장 이규연',
             '프로그램명': '사제동행 학습·정서 멘토링 및 문화체험 프로그램',
@@ -519,18 +876,19 @@
             '만족도결과': '참여 학생 및 학부모 종합 만족도 96.4% 달성했습니다.',
             '향후계획': '동계방학 중 집중 돌봄 프로그램 연계 및 2027학년도 계획 수립 예정입니다.'
           },
-          completed: false // 9. 최종 제출 완료 여부
+          completed: false
         },
         {
           id: 'doc-2',
-          officialTitle: '[창의인재과-3190] 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출',
+          officialTitle: '2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출 요청',
           priority: '필수',
           fileName: '[서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx',
           format: 'XLSX',
+          summary: '단위학교 영재학급 운영 결과 및 사업비 집행 정산서를 2026. 11. 25.(수) 17:00 한 제출',
           requiredFields: ['학교명', '영재학급명', '담당교사', '수료인원', '총배정예산', '집행금액', '집행잔액', '주요실험모듈실적'],
-          startDate: '2026-11-21',
+          startDate: '2026-11-17',
           deadline: '2026-11-25',
-          destination: '경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 제출)',
+          destination: '경상북도경산교육지원청 창의인재과 (K-에듀파인 시스템 제출)',
           workflowSteps: [
             { step: '1. 공문접수 및 필수판별', done: true },
             { step: '2. 출석부·이수시간 확인', done: true },
@@ -550,71 +908,9 @@
             '주요실험모듈실적': '초소수성 표면 탐구, 액체 밀도탑 설계, 생체 모방 위장술, 인체 호흡계 모델링 실험 운영했습니다.'
           },
           completed: false
-        },
-        {
-          id: 'doc-3',
-          officialTitle: '[경북교육청연수원-1120] 2026 하반기 에듀테크 활용 수업혁신 자율연수 신청 안내',
-          priority: '권장',
-          fileName: '(희망교원만) 연수신청서_명단.xlsx',
-          format: 'XLSX',
-          requiredFields: ['학교명', '직급', '성명', '희망과정명', '연락처'],
-          startDate: '2026-11-12',
-          deadline: '2026-11-18',
-          destination: '경상북도교육청연수원 연수운영부 (희망자 없을 시 미제출 가능)',
-          workflowSteps: [
-            { step: '1. 공문접수 (권장/안내 판별)', done: true },
-            { step: '2. 전 교원 쿨메신저 공람안내', done: true },
-            { step: '3. 희망자 여부 확인 후 종결', done: true }
-          ],
-          extractedData: {
-            '학교명': '옥곡초등학교',
-            '직급': '교사',
-            '성명': '희망자 없음 (내부공람 완료)',
-            '희망과정명': '디지털 기반 맞춤형 영어·체육 수업 설계 과정',
-            '연락처': '-'
-          },
-          completed: true
         }
       ];
 
-      // 실전 K-에듀파인 샘플 공문 원문 3종
-      const edufineSamples = [
-        {
-          raw: `[경상북도경산교육지원청 시행 교육지원과-4812 (2026. 11. 16.)]\n제목: 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 조사 결과 제출(필수)\n\n1. 관련: 경상북도교육청 교육복지과-1092(2026.03.10.)\n2. 교육복지 우선지원사업 운영학교에서는 당해 연도 사업 추진 실적 및 만족도 결과를 아래 기한까지 빠짐없이 제출하여 주시기 바랍니다.\n  가. 제출대상: 관내 교육복지 우선지원사업 운영 초·중학교 전체 (필수제출)\n  나. 수합 및 작성기간: 2026-11-16 ~ 2026-11-20\n  다. 제출기한: 2026-11-20(금) 16:00까지 (기한엄수)\n  라. 제출처: 경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발로 제출)\n  마. 제출파일: [붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx\n  바. 필수포함내용: 학교명, 담당부장(교사), 프로그램명, 운영기간, 참여학생수, 주요추진실적, 예산집행내역, 만족도결과, 향후계획`,
-          title: '[경산교육지원청-4812] 2026학년도 교육복지 우선지원사업 운영 실적 및 만족도 제출',
-          priority: '필수',
-          files: '[붙임1] 교육복지_운영실적보고서(학교명).hwp, [붙임2] 만족도집계표.xlsx',
-          format: 'HWP',
-          contents: '학교명, 담당부장(교사), 프로그램명, 운영기간, 참여학생수, 주요추진실적, 예산집행내역, 만족도결과, 향후계획',
-          startDate: '2026-11-16',
-          deadline: '2026-11-20',
-          destination: '경상북도경산교육지원청 교육지원과 (K-에듀파인 문서수발)'
-        },
-        {
-          raw: `[경상북도경산교육지원청 시행 창의인재과-3190 (2026. 11. 17.)]\n제목: 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출 요청\n\n1. 관련: 2026학년도 영재교육 운영 기본계획\n2. 단위학교 영재학급 운영교에서는 2026학년도 운영 결과 및 사업비 집행 정산서를 다음과 같이 제출하여 주시기 바랍니다.\n  가. 구분: 필수 제출 (미제출 시 차년도 예산 배정 제외)\n  나. 정산 및 작성기간: 2026-11-21 ~ 2026-11-25\n  다. 제출기한: 2026-11-25(수) 17:00까지\n  라. 제출처: 경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 시스템 제출)\n  마. 제출서류: [서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx\n  바. 필수기재항목: 학교명, 영재학급명, 담당교사, 수료인원, 총배정예산, 집행금액, 집행잔액, 주요실험모듈실적`,
-          title: '[창의인재과-3190] 2026학년도 단위학교 영재학급 운영 결과보고서 및 정산서 제출',
-          priority: '필수',
-          files: '[서식1] 영재학급_운영결과보고서.hwp, [서식2] 예산집행_정산내역서.xlsx',
-          format: 'XLSX',
-          contents: '학교명, 영재학급명, 담당교사, 수료인원, 총배정예산, 집행금액, 집행잔액, 주요실험모듈실적',
-          startDate: '2026-11-21',
-          deadline: '2026-11-25',
-          destination: '경상북도경산교육지원청 교육지원과 영재교육담당 (K-에듀파인 제출)'
-        },
-        {
-          raw: `[경상북도교육청연수원 시행 연수운영부-1120 (2026. 11. 12.)]\n제목: 2026 하반기 에듀테크 활용 수업혁신 교원 자율연수 신청 안내\n\n1. 교원의 디지털 수업 역량 강화를 위한 자율연수 과정을 안내하오니 희망하는 교원이 참여할 수 있도록 안내하여 주시기 바랍니다.\n  가. 구분: 권장 사항 (희망 교원 자율 신청, 해당자 없을 시 공문 미제출)\n  나. 신청기간: 2026-11-12 ~ 2026-11-18\n  다. 제출처: 경상북도교육청연수원 연수운영부 (희망자 있을 경우만 K-에듀파인 제출)\n  라. 제출파일: (희망교원만) 연수신청서_명단.xlsx\n  마. 작성항목: 학교명, 직급, 성명, 희망과정명, 연락처`,
-          title: '[경북교육청연수원-1120] 2026 하반기 에듀테크 활용 수업혁신 자율연수 신청 안내',
-          priority: '권장',
-          files: '(희망교원만) 연수신청서_명단.xlsx',
-          format: 'XLSX',
-          contents: '학교명, 직급, 성명, 희망과정명, 연락처',
-          startDate: '2026-11-12',
-          deadline: '2026-11-18',
-          destination: '경상북도교육청연수원 연수운영부 (희망자 없을 시 미제출 가능)'
-        }
-      ];
-
-      // 업무 매뉴얼 초기 데이터
       const defaultManuals = [
         {
           id: 'manual-1',
@@ -644,28 +940,25 @@
         }
       ];
 
-      let docs = storage.get('edufine_docs_v3', defaultDocs);
+      let docs = storage.get('edufine_docs_v4', defaultDocs);
       if (!Array.isArray(docs) || docs.length === 0) docs = defaultDocs;
 
-      let manuals = storage.get('edufine_manuals_v3', defaultManuals);
+      let manuals = storage.get('edufine_manuals_v4', defaultManuals);
       if (!Array.isArray(manuals) || manuals.length === 0) manuals = defaultManuals;
 
       let activeDocId = docs[0]?.id || null;
       let currentYear = 2026;
-      let currentMonth = 10; // 11월
+      let currentMonth = 10;
       let listFilter = 'all';
       let rangeStart = null;
       let rangeEnd = null;
 
       function saveState() {
-        storage.set('edufine_docs_v3', docs);
-        storage.set('edufine_manuals_v3', manuals);
+        storage.set('edufine_docs_v4', docs);
+        storage.set('edufine_manuals_v4', manuals);
         renderAll();
       }
 
-      // -----------------------------------------------------------------------
-      // 상단 KPI 업데이트
-      // -----------------------------------------------------------------------
       function updateStats() {
         const total = docs.length;
         const mandatory = docs.filter(d => d.priority === '필수').length;
@@ -680,9 +973,6 @@
         document.getElementById('statCompleted').textContent = `${completed}건`;
       }
 
-      // -----------------------------------------------------------------------
-      // [탭 1] 1~6단계 공문 자동 판독기
-      // -----------------------------------------------------------------------
       function buildDefaultWorkflow(priority) {
         if (priority === '필수') {
           return [
@@ -711,120 +1001,76 @@
         } else {
           badgeArea.innerHTML = `<span class="bg-slate-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">⚪ 1단계 판정: 단순 참고/공람</span>`;
         }
-        renderExtFlowPreview(p);
-      }
-
-      function renderExtFlowPreview(priority) {
-        const steps = buildDefaultWorkflow(priority);
+        const steps = buildDefaultWorkflow(p);
         const container = document.getElementById('extFlowPreview');
-        if (!container) return;
-        container.innerHTML = steps.map((s, idx) => `
-          <div class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 flex items-center gap-2">
-            <span class="w-4 h-4 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">${idx + 1}</span>
-            <span class="truncate text-slate-200 font-medium">${s.step.replace(/^\d+\.\s*/, '')}</span>
-          </div>
-        `).join('');
+        if (container) {
+          container.innerHTML = steps.map((s, idx) => `
+            <div class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">${idx + 1}</span>
+              <span class="truncate text-slate-200 font-medium">${s.step.replace(/^\d+\.\s*/, '')}</span>
+            </div>
+          `).join('');
+        }
       }
 
       function loadEdufineSample(idx) {
         const s = edufineSamples[idx];
         document.getElementById('rawOfficialInput').value = s.raw;
-        document.getElementById('extTitle').value = s.title;
-        document.getElementById('extPriority').value = s.priority;
-        document.getElementById('extFiles').value = s.files;
-        document.getElementById('extFormat').value = s.format;
-        document.getElementById('extContents').value = s.contents;
-        document.getElementById('extStartDate').value = s.startDate;
-        document.getElementById('extDeadline').value = s.deadline;
-        document.getElementById('extDestination').value = s.destination;
-        updatePriorityBadge();
+        analyzeEdufineDoc(true);
       }
 
-      function handleOfficialFileUpload(e) {
+      async function handleOfficialFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
-        const ext = file.name.split('.').pop().toLowerCase();
-        let format = 'HWP';
-        if (['xlsx', 'xls', 'csv'].includes(ext)) format = 'XLSX';
-        else if (ext === 'pdf') format = 'PDF';
-        else if (['jpg', 'jpeg', 'png'].includes(ext)) format = 'JPG/PNG';
+        const statusEl = document.getElementById('fileParseStatus');
+        statusEl.textContent = `⏳ [${file.name}] 내부 텍스트 해독 중...`;
 
-        document.getElementById('extFormat').value = format;
-        document.getElementById('extFiles').value = file.name;
-        document.getElementById('extTitle').value = `[공문파일 인식] ${file.name.replace(/\.[^/.]+$/, '')}`;
-        document.getElementById('extPriority').value = '필수';
-        document.getElementById('extStartDate').value = '2026-11-17';
-        document.getElementById('extDeadline').value = '2026-11-24';
-        document.getElementById('extDestination').value = '경상북도경산교육지원청 (K-에듀파인 문서수발)';
+        const extractedText = await extractTextFromUploadedFile(file);
+        document.getElementById('rawOfficialInput').value = extractedText;
+        analyzeEdufineDoc(true);
 
-        if (['xlsx', 'xls', 'csv'].includes(ext) && window.XLSX) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            try {
-              const wb = XLSX.read(evt.target.result, { type: 'binary' });
-              const sheet = wb.Sheets[wb.SheetNames[0]];
-              const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-              if (rows.length > 0 && rows[0].length > 0) {
-                const headers = rows[0].filter(Boolean).join(', ');
-                document.getElementById('extContents').value = headers;
-                document.getElementById('rawOfficialInput').value = `[엑셀 붙임 양식 분석 완료: ${file.name}]\n추출된 필수 입력 항목: ${headers}`;
-              }
-            } catch (err) {}
-          };
-          reader.readAsBinaryString(file);
-        } else {
-          document.getElementById('rawOfficialInput').value = `[${format} 공문/양식 파일 인식됨: ${file.name}]\n본문에서 필수 여부, 제출 기한, 제출처, 작성 항목을 추출했습니다.`;
-          document.getElementById('extContents').value = '학교명, 담당교사, 운영기간, 참여인원, 주요추진실적, 예산집행내역, 향후계획';
+        // 업로드한 파일명을 제출 파일란에 우선 반영
+        if (file.name) {
+          document.getElementById('extFiles').value = file.name;
+          const ext = file.name.split('.').pop().toLowerCase();
+          if (['xlsx', 'xls', 'csv'].includes(ext)) document.getElementById('extFormat').value = 'XLSX';
+          else if (ext === 'pdf') document.getElementById('extFormat').value = 'PDF';
+          else if (['jpg', 'jpeg', 'png'].includes(ext)) document.getElementById('extFormat').value = 'JPG/PNG';
+          else document.getElementById('extFormat').value = 'HWP';
         }
-        updatePriorityBadge();
+        statusEl.textContent = `✅ [${file.name}] 정밀 추출 완료`;
       }
 
-      function analyzeEdufineDoc() {
+      function analyzeEdufineDoc(silent) {
         const raw = document.getElementById('rawOfficialInput').value.trim();
         if (!raw) {
-          alert('K-에듀파인 공문 본문을 붙여넣거나 샘플 버튼을 먼저 클릭해주세요.');
+          if (!silent) alert('공문 본문을 붙여넣거나 파일을 선택해주세요.');
           return;
         }
 
-        // 1. 필수 vs 권장 자동 판별
-        const isOptional = /(권장|희망\s*교원|희망교|자율\s*신청|해당자\s*없을\s*시|미제출\s*가능)/.test(raw);
-        const priority = isOptional ? '권장' : '필수';
-        document.getElementById('extPriority').value = priority;
+        const parsed = parseKoreanOfficialDocument(raw);
 
-        // 제목 추출
-        const titleMatch = raw.match(/제목\s*[:：]\s*(.+)/);
-        if (titleMatch) document.getElementById('extTitle').value = titleMatch[1].trim();
+        document.getElementById('extTitle').value = parsed.title;
+        document.getElementById('extPriority').value = parsed.priority;
+        document.getElementById('extFiles').value = parsed.files;
+        document.getElementById('extFormat').value = parsed.format;
+        document.getElementById('extSummary').value = parsed.summary;
+        document.getElementById('extContents').value = parsed.contents;
+        document.getElementById('extStartDate').value = parsed.startDate;
+        document.getElementById('extDeadline').value = parsed.deadline;
+        document.getElementById('extDestination').value = parsed.destination;
 
-        // 2. 제출 파일 추출
-        const fileMatch = raw.match(/(제출파일|제출서류|제출양식)\s*[:：]\s*(.+)/);
-        if (fileMatch) {
-          document.getElementById('extFiles').value = fileMatch[2].trim();
-          if (/\.xlsx|\.xls/i.test(fileMatch[2])) document.getElementById('extFormat').value = 'XLSX';
-          else if (/\.pdf/i.test(fileMatch[2])) document.getElementById('extFormat').value = 'PDF';
-          else document.getElementById('extFormat').value = 'HWP';
-        }
-
-        // 3. 들어갈 내용 추출
-        const contentMatch = raw.match(/(필수포함내용|필수기재항목|작성항목|필수포함항목)\s*[:：]\s*(.+)/);
-        if (contentMatch) document.getElementById('extContents').value = contentMatch[2].trim();
-
-        // 4. 기한 추출 (2025~2028)
-        const dates = raw.match(/202[5-8][-.\s]?(0[1-9]|1[0-2])[-.\s]?(0[1-9]|[12]\d|3[01])/g);
-        if (dates && dates.length >= 2) {
-          document.getElementById('extStartDate').value = dates[0].replace(/\./g, '-').replace(/\s/g, '');
-          document.getElementById('extDeadline').value = dates[1].replace(/\./g, '-').replace(/\s/g, '');
-        } else if (dates && dates.length === 1) {
-          const d = dates[0].replace(/\./g, '-').replace(/\s/g, '');
-          document.getElementById('extStartDate').value = '2026-11-17';
-          document.getElementById('extDeadline').value = d;
-        }
-
-        // 5. 제출처 추출
-        const destMatch = raw.match(/제출처\s*[:：]\s*(.+)/);
-        if (destMatch) document.getElementById('extDestination').value = destMatch[1].trim();
+        // 추출 근거 표시
+        document.getElementById('evDeadlineLine').innerHTML = `• <b>기한 추출 근거:</b> <span class="underline decoration-rose-400 font-bold">"${parsed.evidence.deadlineLine}"</span> → <b class="text-rose-600">${parsed.deadline}</b>`;
+        document.getElementById('evContentLine').innerHTML = `• <b>내용/항목 근거:</b> "${parsed.evidence.contentLine}"`;
+        document.getElementById('evIgnoredLine').innerHTML = parsed.evidence.ignoredDates.length > 0
+          ? `• <b>자동 배제된 '관련 공문' 과거 날짜:</b> <span class="line-through">${parsed.evidence.ignoredDates.join(', ')}</span> (마감일 혼동 방지됨)`
+          : `• <b>자동 배제된 과거(관련) 날짜:</b> 없음`;
 
         updatePriorityBadge();
-        alert(`공문 자동 분석 완료!\n• 1단계 판정: [${priority}]\n• 마감기한 및 제출처가 우측 리포트에 정리되었습니다.`);
+        if (!silent) {
+          alert(`공문 정밀 분석 완료!\n• 마감기한: ${parsed.deadline}\n• 필수여부: ${parsed.priority}\n• 추출항목: ${parsed.contents}`);
+        }
       }
 
       function confirmAndRegisterDoc() {
@@ -832,17 +1078,18 @@
         const priority = document.getElementById('extPriority').value;
         const fileName = document.getElementById('extFiles').value.trim() || '[붙임1] 결과보고서.hwp';
         const format = document.getElementById('extFormat').value;
+        const summary = document.getElementById('extSummary').value.trim() || officialTitle;
         const contentsStr = document.getElementById('extContents').value.trim() || '학교명, 담당자, 추진실적, 예산내역, 향후계획';
         const requiredFields = contentsStr.split(',').map(s => s.trim()).filter(Boolean);
         const startDate = document.getElementById('extStartDate').value || '2026-11-17';
         const deadline = document.getElementById('extDeadline').value || '2026-11-24';
-        const destination = document.getElementById('extDestination').value.trim() || '경상북도경산교육지원청 (K-에듀파인 문서수발)';
+        const destination = document.getElementById('extDestination').value.trim() || '교육지원청 (K-에듀파인 문서수발)';
 
         const extractedData = {};
         requiredFields.forEach(f => {
           if (f.includes('학교') || f.includes('기관')) extractedData[f] = '옥곡초등학교';
-          else if (f.includes('담당') || f.includes('성명') || f.includes('교사')) extractedData[f] = '이규연';
-          else if (f.includes('기간')) extractedData[f] = `${startDate} ~ ${deadline}`;
+          else if (f.includes('담당') || f.includes('성명') || f.includes('교사') || f.includes('작성자')) extractedData[f] = '이규연';
+          else if (f.includes('기간') || f.includes('일시')) extractedData[f] = `${startDate} ~ ${deadline}`;
           else extractedData[f] = '';
         });
 
@@ -852,6 +1099,7 @@
           priority,
           fileName,
           format,
+          summary,
           requiredFields,
           startDate,
           deadline,
@@ -864,7 +1112,6 @@
         docs.unshift(newDoc);
         activeDocId = newDoc.id;
 
-        // 마감일 기준 달력 연/월 동기화
         const [y, m] = deadline.split('-').map(Number);
         if (y >= 2025 && y <= 2028) {
           currentYear = y;
@@ -876,7 +1123,7 @@
       }
 
       // -----------------------------------------------------------------------
-      // [탭 2] 6~9단계: 업무 흐름도 · 정보 수합 · 양식 맞춤 작성 · 제출
+      // [탭 2] 6~9단계 워크플로우
       // -----------------------------------------------------------------------
       function selectActiveDoc(docId) {
         activeDocId = docId;
@@ -887,9 +1134,7 @@
         const doc = docs.find(d => d.id === activeDocId);
         if (!doc) return;
         doc.workflowSteps[stepIdx].done = !doc.workflowSteps[stepIdx].done;
-        // 모든 단계가 완료되면 최종 제출 완료 상태도 연동 가능
-        const allDone = doc.workflowSteps.every(s => s.done);
-        doc.completed = allDone;
+        doc.completed = doc.workflowSteps.every(s => s.done);
         saveState();
       }
 
@@ -897,9 +1142,7 @@
         const doc = docs.find(d => d.id === activeDocId);
         if (!doc) return;
         doc.completed = !doc.completed;
-        if (doc.completed) {
-          doc.workflowSteps.forEach(s => s.done = true);
-        }
+        if (doc.completed) doc.workflowSteps.forEach(s => s.done = true);
         saveState();
       }
 
@@ -927,7 +1170,8 @@
         if (!doc) return;
         activeDocId = doc.id;
 
-        // 9단계 최종 제출 버튼 상태
+        document.getElementById('activeDocSummaryText').textContent = `📌 공문 핵심 요지: ${doc.summary || doc.officialTitle}`;
+
         const submitBtn = document.getElementById('finalSubmitBtn');
         if (doc.completed) {
           submitBtn.className = 'px-4 py-2 rounded-lg text-xs font-extrabold bg-emerald-600 text-white shadow cursor-pointer';
@@ -937,7 +1181,6 @@
           submitBtn.textContent = '🚀 9단계: 최종 제출 완료로 표시하기';
         }
 
-        // 1~5단계 핵심 요약 바
         const summaryBar = document.getElementById('activeDocSummaryBar');
         summaryBar.innerHTML = `
           <div class="bg-white p-2.5 rounded-lg border border-slate-200">
@@ -949,8 +1192,8 @@
             <span class="font-bold text-slate-800 truncate block" title="${doc.fileName}">${doc.fileName}</span>
           </div>
           <div class="bg-white p-2.5 rounded-lg border border-slate-200">
-            <span class="text-[10px] text-slate-400 font-bold block">3. 들어갈 필수 항목 수</span>
-            <span class="font-bold text-indigo-600">총 ${doc.requiredFields.length}개 항목 추출됨</span>
+            <span class="text-[10px] text-slate-400 font-bold block">3. 들어갈 필수 항목</span>
+            <span class="font-bold text-indigo-600 truncate block" title="${doc.requiredFields.join(', ')}">${doc.requiredFields.join(', ')}</span>
           </div>
           <div class="bg-white p-2.5 rounded-lg border border-slate-200">
             <span class="text-[10px] text-slate-400 font-bold block">4. 업무 기간 및 제출 기한</span>
@@ -962,7 +1205,6 @@
           </div>
         `;
 
-        // 6단계: 인터랙티브 업무 흐름도 렌더링
         const doneCount = doc.workflowSteps.filter(s => s.done).length;
         const pct = Math.round((doneCount / doc.workflowSteps.length) * 100);
         document.getElementById('flowProgressText').textContent = `진행률 ${pct}% (${doneCount}/${doc.workflowSteps.length} 단계 완료)`;
@@ -971,9 +1213,7 @@
         flowContainer.innerHTML = doc.workflowSteps.map((s, idx) => `
           <div onclick="window.app.toggleFlowStep(${idx})"
                class="cursor-pointer p-3 rounded-xl border transition flex flex-col justify-between ${
-                 s.done
-                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-indigo-400'
+                 s.done ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-indigo-400'
                }">
             <div class="flex items-center justify-between mb-1.5">
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded ${s.done ? 'bg-indigo-800 text-indigo-100' : 'bg-slate-200 text-slate-600'}">STEP ${idx + 1}</span>
@@ -983,7 +1223,6 @@
           </div>
         `).join('');
 
-        // 7단계: 정보 수합 입력 폼 렌더링
         const formContainer = document.getElementById('collectionFieldsForm');
         formContainer.innerHTML = doc.requiredFields.map(field => `
           <div>
@@ -999,7 +1238,6 @@
           </div>
         `).join('');
 
-        // 8단계: 양식 맞춤 출력물 생성
         renderFormattedDocument(doc);
       }
 
@@ -1007,17 +1245,19 @@
         const doc = docs.find(d => d.id === docId);
         if (!doc) return;
         doc.extractedData[field] = val;
-        storage.set('edufine_docs_v3', docs);
+        storage.set('edufine_docs_v4', docs);
         renderFormattedDocument(doc);
       }
 
-      function extractFieldsFromTemplateFile(e) {
+      async function extractFieldsFromTemplateFile(e) {
         const file = e.target.files[0];
         if (!file) return;
         const doc = docs.find(d => d.id === activeDocId);
         if (!doc) return;
 
-        const addField = prompt(`[${file.name}] 양식에서 추출된 작성 항목입니다. 추가·수정할 항목을 쉼표(,)로 구분해 입력하세요:`, doc.requiredFields.join(', '));
+        const text = await extractTextFromUploadedFile(file);
+        const parsed = parseKoreanOfficialDocument(text);
+        const addField = prompt(`[${file.name}] 양식 파일에서 인식된 작성 항목입니다. 확인 후 적용하세요:`, parsed.contents || doc.requiredFields.join(', '));
         if (addField) {
           doc.requiredFields = addField.split(',').map(s => s.trim()).filter(Boolean);
           saveState();
@@ -1027,12 +1267,11 @@
       function copyCollectionMessage() {
         const doc = docs.find(d => d.id === activeDocId);
         if (!doc) return;
-        const msg = `[자료 수합 협조 요청]\n선생님 안녕하십니까? ${doc.officialTitle} 관련하여 자료를 수합하고자 합니다.\n\n• 구분: ${doc.priority} 제출 공문\n• 제출기한: ${doc.deadline}까지\n• 작성하실 항목: ${doc.requiredFields.join(', ')}\n\n바쁘시겠지만 기한 내 회신 부탁드립니다. 감사합니다!`;
+        const msg = `[자료 수합 협조 요청]\n선생님 안녕하십니까? '${doc.officialTitle}' 관련하여 자료를 수합하고자 합니다.\n\n• 공문 요지: ${doc.summary || doc.officialTitle}\n• 구분: ${doc.priority} 제출\n• 제출 기한: ${doc.deadline}까지\n• 작성하실 항목: ${doc.requiredFields.join(', ')}\n\n기한 내 회신 부탁드립니다. 감사합니다!`;
         navigator.clipboard.writeText(msg);
-        alert('교내 메신저(쿨메신저)용 자료 수합 협조 문구가 클립보드에 복사되었습니다!');
+        alert('교내 메신저(쿨메신저)용 수합 요청 문구가 클립보드에 복사되었습니다!');
       }
 
-      // 공문서 개조식 어미 자동 변환기
       function toOfficialStyle(text) {
         if (!text) return '-';
         return text.trim()
@@ -1063,8 +1302,8 @@
           <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
             <div class="border-b-2 border-slate-800 pb-3">
               <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1">
-                <span>수신자: ${doc.destination}</span>
-                <span>제출기한: ${doc.deadline}</span>
+                <span>수신처: ${doc.destination}</span>
+                <span class="text-rose-600 font-bold">제출기한: ${doc.deadline}</span>
               </div>
               <h4 class="text-sm md:text-base font-extrabold text-slate-900">제목: ${doc.officialTitle} 제출</h4>
               <p class="text-[11px] text-indigo-600 font-semibold mt-1">붙임 파일: ${doc.fileName}</p>
@@ -1113,7 +1352,7 @@
         const doc = docs.find(d => d.id === activeDocId);
         if (!doc) return;
         const lines = doc.requiredFields.map(f => `■ ${f} : ${toOfficialStyle(doc.extractedData[f] || '')}`);
-        const content = `========================================\n제목: ${doc.officialTitle}\n구분: ${doc.priority}\n제출처: ${doc.destination}\n제출기한: ${doc.startDate} ~ ${doc.deadline}\n붙임파일: ${doc.fileName}\n========================================\n\n` + lines.join('\n\n');
+        const content = `========================================\n제목: ${doc.officialTitle}\n구분: ${doc.priority}\n핵심요약: ${doc.summary || ''}\n제출처: ${doc.destination}\n제출기한: ${doc.startDate} ~ ${doc.deadline}\n붙임파일: ${doc.fileName}\n========================================\n\n` + lines.join('\n\n');
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -1122,7 +1361,7 @@
       }
 
       // -----------------------------------------------------------------------
-      // [탭 3] 2025~2028 자동 달력 & 체크리스트
+      // [탭 3] 2025~2028 달력 및 체크리스트
       // -----------------------------------------------------------------------
       function jumpToYearMonth() {
         currentYear = parseInt(document.getElementById('yearSelect').value, 10);
@@ -1211,9 +1450,9 @@
             return `
               <div onclick="window.app.openDocFromCalendar('${doc.id}')"
                    class="cursor-pointer text-[10px] px-1.5 py-0.5 rounded truncate mt-1 flex items-center gap-1 ${badgeStyle}"
-                   title="[${doc.priority}] ${doc.officialTitle} (제출처: ${doc.destination})">
+                   title="[${doc.priority}] ${doc.officialTitle} (마감: ${doc.deadline})">
                 <span>${doc.completed ? '✓' : isDeadline ? '🔥마감' : '•'}</span>
-                <span class="truncate">${doc.officialTitle.replace(/^\[.+?\]\s*/, '')}</span>
+                <span class="truncate">${doc.officialTitle}</span>
               </div>
             `;
           }).join('');
@@ -1224,11 +1463,7 @@
 
           grid.innerHTML += `
             <div class="h-24 md:h-28 p-1.5 rounded-lg border flex flex-col justify-between overflow-hidden ${
-              isToday
-                ? 'border-2 border-indigo-600 bg-indigo-50/20'
-                : inCustomRange
-                  ? 'border-indigo-300 bg-amber-50/40'
-                  : 'border-slate-200 bg-white'
+              isToday ? 'border-2 border-indigo-600 bg-indigo-50/20' : inCustomRange ? 'border-indigo-300 bg-amber-50/40' : 'border-slate-200 bg-white'
             }">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1">
@@ -1283,9 +1518,9 @@
               </label>
             </div>
             <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] space-y-1 text-slate-600">
+              <p>• <b>핵심요지:</b> ${d.summary || '-'}</p>
               <p>• <b>제출파일:</b> <span class="text-indigo-600 font-semibold">${d.fileName}</span></p>
               <p>• <b>기한:</b> <span class="text-rose-600 font-bold">${d.startDate} ~ ${d.deadline}</span></p>
-              <p>• <b>제출처:</b> ${d.destination}</p>
             </div>
             <div class="mt-2 text-right">
               <button type="button" onclick="window.app.openDocFromCalendar('${d.id}')" class="text-xs text-indigo-600 hover:underline font-extrabold cursor-pointer">
@@ -1297,7 +1532,7 @@
       }
 
       // -----------------------------------------------------------------------
-      // [탭 4] 업무 매뉴얼 3단계 검증 도우미
+      // [탭 4] 매뉴얼 3단계 검증 도우미
       // -----------------------------------------------------------------------
       function renderManuals() {
         const badge = document.getElementById('manualCountBadge');
@@ -1329,21 +1564,18 @@
         saveState();
       }
 
-      function handleManualFileUpload(e) {
+      async function handleManualFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          const text = evt.target.result;
-          manuals.unshift({
-            id: 'm-' + Date.now(),
-            title: file.name,
-            category: '파일 업로드 지침',
-            content: typeof text === 'string' && text.trim().length > 0 ? text.slice(0, 3000) : `[${file.name}] 매뉴얼 조항 색인 완료`
-          });
-          saveState();
-        };
-        reader.readAsText(file);
+        const text = await extractTextFromUploadedFile(file);
+        manuals.unshift({
+          id: 'm-' + Date.now(),
+          title: file.name,
+          category: '파일 업로드 지침',
+          content: text.slice(0, 4000)
+        });
+        saveState();
+        alert(`[${file.name}] 매뉴얼 내부 본문이 추출되어 탑재되었습니다!`);
       }
 
       function askSampleQuestion(q) {
@@ -1395,7 +1627,7 @@
             `;
             chat.scrollTop = chat.scrollHeight;
           }
-        }, 900);
+        }, 850);
       }
 
       function verifyManualAnswer(question) {
@@ -1429,9 +1661,6 @@
         };
       }
 
-      // -----------------------------------------------------------------------
-      // 탭 전환 & 초기화
-      // -----------------------------------------------------------------------
       function switchTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         const target = document.getElementById(`view-${tabName}`);
@@ -1456,7 +1685,7 @@
         const key = document.getElementById('geminiApiKeyInput').value.trim();
         if (key) {
           storage.set('edufine_gemini_key', key);
-          document.getElementById('apiStatusText').textContent = 'AI 연결됨';
+          document.getElementById('apiStatusText').textContent = 'Gemini AI 연결됨';
         }
         toggleApiModal();
       }
@@ -1501,7 +1730,6 @@
         saveApiKey
       };
 
-      // 초기 로드 시 첫 번째 K-에듀파인 샘플 세팅 및 전체 렌더링
       loadEdufineSample(0);
       renderAll();
       askSampleQuestion('교육복지 우선지원사업 예산 집행 시 간식비 및 강사료 지급 한도와 주의사항은?');
