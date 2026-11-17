@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkFlow AI - 스마트 공문·양식 업무 보조 시스템</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS (엑셀/CSV 파싱용) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="text-slate-800">
+
+  <!-- 상단 네비게이션 -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 p-2 rounded-lg">
+          <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">WorkFlow AI</h1>
+          <p class="text-xs text-slate-400">공문 분석 · 양식 추출 · 자동 문서 정리 시스템</p>
+        </div>
+      </div>
+
+      <!-- 다중 포맷 지원 배지 & API 설정 -->
+      <div class="flex items-center space-x-3">
+        <div class="hidden md:flex items-center space-x-1.5 bg-slate-800 px-3 py-1.5 rounded-full text-xs border border-slate-700">
+          <span class="text-slate-400 mr-1">인식 지원 포맷:</span>
+          <span class="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-medium">HWP</span>
+          <span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-medium">XLSX</span>
+          <span class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-medium">PDF</span>
+          <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-medium">JPG/PNG</span>
+        </div>
+        <button onclick="toggleApiModal()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs border border-slate-700 transition">
+          <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span id="apiStatusText">Gemini API 연결 (선택)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 컨테이너 -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    
+    <!-- 상단 요약 카드 -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-500 font-medium">등록된 공문/업무</p>
+          <p class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">0건</p>
+        </div>
+        <div class="bg-indigo-50 p-3 rounded-lg text-indigo-600"><i data-lucide="file-text"></i></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-500 font-medium">제출 완료</p>
+          <p class="text-2xl font-bold text-emerald-600 mt-1" id="statCompleted">0건</p>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-lg text-emerald-600"><i data-lucide="check-circle-2"></i></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-500 font-medium">미완료 (진행중)</p>
+          <p class="text-2xl font-bold text-amber-600 mt-1" id="statPending">0건</p>
+        </div>
+        <div class="bg-amber-50 p-3 rounded-lg text-amber-600"><i data-lucide="clock"></i></div>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-slate-500 font-medium">전체 업무 달성률</p>
+          <p class="text-2xl font-bold text-indigo-600 mt-1" id="statRate">0%</p>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i data-lucide="pie-chart"></i></div>
+      </div>
+    </div>
+
+    <!-- 탭 메뉴 -->
+    <div class="flex space-x-2 border-b border-slate-200 mb-6 overflow-x-auto pb-1">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 font-semibold text-sm rounded-t-lg border-b-2 border-indigo-600 text-indigo-600 bg-white flex items-center space-x-2">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        <span>통합 달력 & 대시보드</span>
+      </button>
+      <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+        <i data-lucide="file-up" class="w-4 h-4"></i>
+        <span>1. 공문 등록·분석 (HWP/PDF/IMG)</span>
+      </button>
+      <button onclick="switchTab('autofill')" id="tab-autofill" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+        <i data-lucide="wand-2" class="w-4 h-4"></i>
+        <span>2. 필요정보 추출 & 3. 양식 자동정리</span>
+      </button>
+      <button onclick="switchTab('checklist')" id="tab-checklist" class="tab-btn px-4 py-2.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+        <i data-lucide="check-square" class="w-4 h-4"></i>
+        <span>4. 업무 완료 체크리스트</span>
+      </button>
+    </div>
+
+    <!-- ==================== [탭 0] 통합 달력 & 대시보드 ==================== -->
+    <section id="view-dashboard" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 달력 영역 -->
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-base flex items-center space-x-2">
+            <i data-lucide="calendar-days" class="w-5 h-5 text-indigo-600"></i>
+            <span id="calendarTitle">2026년 11월 제출 기한 달력</span>
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button onclick="changeMonth(-1)" class="p-1.5 rounded hover:bg-slate-100"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <button onclick="changeMonth(0
